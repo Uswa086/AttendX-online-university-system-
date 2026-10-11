@@ -1,520 +1,641 @@
 
-/*
-  AttendX — Online University Attendance Demo
-  All data is illustrative and stored in this script.
-  Connect a secure backend before using real university records.
-*/
+"use strict";
 
-const courses = [
-  {id:"db",name:"Database Systems",code:"CS-301",teacher:"Dr. Ayesha Malik",day:"Monday",time:"02:30 PM",duration:"60 min",pct:92,attended:11,total:12,color:"#6588e6",pale:"#edf2ff",icon:"DB",description:"SQL, relational databases and data modelling."},
-  {id:"sec",name:"Information Security",code:"CS-305",teacher:"Mr. Hamza Qureshi",day:"Monday",time:"04:00 PM",duration:"60 min",pct:83,attended:10,total:12,color:"#9879d9",pale:"#f3efff",icon:"IS",description:"Cybersecurity principles, threats and risk management."},
-  {id:"net",name:"Computer Networks",code:"CS-210",teacher:"Dr. Sara Ahmed",day:"Tuesday",time:"11:00 AM",duration:"90 min",pct:75,attended:9,total:12,color:"#d6a54c",pale:"#fbf5e7",icon:"CN",description:"Network models, routing and communication protocols."},
-  {id:"ai",name:"Artificial Intelligence",code:"CS-320",teacher:"Dr. Bilal Shah",day:"Wednesday",time:"01:00 PM",duration:"60 min",pct:91,attended:10,total:11,color:"#4fae91",pale:"#eaf8f2",icon:"AI",description:"AI foundations, intelligent systems and search."},
-  {id:"se",name:"Software Engineering",code:"CS-250",teacher:"Ms. Hira Noor",day:"Thursday",time:"10:00 AM",duration:"60 min",pct:82,attended:9,total:11,color:"#d57989",pale:"#fff0f2",icon:"SE",description:"Software lifecycles, requirements and project planning."}
+/* AttendX — browser-based university portal demo */
+
+const SUBJECTS = [
+  { id: "ai", name: "Artificial Intelligence", icon: "AI", lab: true },
+  { id: "cn", name: "Computer Networks", icon: "CN", lab: true },
+  { id: "is", name: "Information Security", icon: "IS", lab: true },
+  { id: "mvc", name: "Multivariable Calculus", icon: "MC", lab: false },
+  { id: "quran", name: "Holy Quran", icon: "HQ", lab: false },
+  { id: "ideology", name: "Ideology", icon: "ID", lab: false }
 ];
 
-const records = [
-  {course:"Database Systems",code:"CS-301",date:"2026-10-08",teacher:"Dr. Ayesha Malik",duration:"60 min",status:"Present"},
-  {course:"Information Security",code:"CS-305",date:"2026-10-07",teacher:"Mr. Hamza Qureshi",duration:"60 min",status:"Present"},
-  {course:"Computer Networks",code:"CS-210",date:"2026-10-06",teacher:"Dr. Sara Ahmed",duration:"90 min",status:"Absent"},
-  {course:"Artificial Intelligence",code:"CS-320",date:"2026-10-05",teacher:"Dr. Bilal Shah",duration:"60 min",status:"Present"},
-  {course:"Software Engineering",code:"CS-250",date:"2026-10-02",teacher:"Ms. Hira Noor",duration:"60 min",status:"Late"},
-  {course:"Database Systems",code:"CS-301",date:"2026-10-01",teacher:"Dr. Ayesha Malik",duration:"60 min",status:"Present"},
-  {course:"Computer Networks",code:"CS-210",date:"2026-09-29",teacher:"Dr. Sara Ahmed",duration:"90 min",status:"Present"},
-  {course:"Information Security",code:"CS-305",date:"2026-09-28",teacher:"Mr. Hamza Qureshi",duration:"60 min",status:"Absent"},
-  {course:"Artificial Intelligence",code:"CS-320",date:"2026-09-25",teacher:"Dr. Bilal Shah",duration:"60 min",status:"Present"},
-  {course:"Software Engineering",code:"CS-250",date:"2026-09-24",teacher:"Ms. Hira Noor",duration:"60 min",status:"Present"}
-];
+const STORAGE_KEY = "attendx_student_portal_v1";
 
-const schedule = {
-  Monday:[
-    {name:"Database Systems",time:"02:30 PM",duration:"60 min",color:"#6588e6",pale:"#edf2ff"},
-    {name:"Information Security",time:"04:00 PM",duration:"60 min",color:"#9879d9",pale:"#f3efff"}
-  ],
-  Tuesday:[
-    {name:"Computer Networks",time:"11:00 AM",duration:"90 min",color:"#d6a54c",pale:"#fbf5e7"}
-  ],
-  Wednesday:[
-    {name:"Artificial Intelligence",time:"01:00 PM",duration:"60 min",color:"#4fae91",pale:"#eaf8f2"}
-  ],
-  Thursday:[
-    {name:"Software Engineering",time:"10:00 AM",duration:"60 min",color:"#d57989",pale:"#fff0f2"},
-    {name:"Database Systems",time:"02:30 PM",duration:"60 min",color:"#6588e6",pale:"#edf2ff"}
-  ],
-  Friday:[
-    {name:"Information Security",time:"12:00 PM",duration:"60 min",color:"#9879d9",pale:"#f3efff"}
-  ]
-};
-
-const $ = selector => document.querySelector(selector);
-const $$ = selector => [...document.querySelectorAll(selector)];
-
-const escapeHTML = value => String(value).replace(/[&<>"']/g, char => ({
-  "&":"&amp;",
-  "<":"&lt;",
-  ">":"&gt;",
-  '"':"&quot;",
-  "'":"&#39;"
-}[char]));
-
-function notify(message, icon="✓") {
-  const toast = document.createElement("div");
-  toast.className = "toast";
-
-  const symbol = document.createElement("b");
-  symbol.textContent = icon;
-
-  const text = document.createElement("span");
-  text.textContent = message;
-
-  toast.append(symbol, text);
-  $("#toastRegion").appendChild(toast);
-
-  setTimeout(() => toast.remove(), 3200);
+function defaultState() {
+  return {
+    profile: {
+      name: "Student Name",
+      roll: "",
+      email: "",
+      program: "BS Computer Science",
+      semester: "1st Semester",
+      university: ""
+    },
+    attendance: [],
+    surveys: [],
+    marks: {}
+  };
 }
 
-/* Navigation */
+function loadState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (saved && typeof saved === "object") {
+      const defaults = defaultState();
+      return {
+        profile: { ...defaults.profile, ...(saved.profile || {}) },
+        attendance: Array.isArray(saved.attendance) ? saved.attendance : [],
+        surveys: Array.isArray(saved.surveys) ? saved.surveys : [],
+        marks: saved.marks && typeof saved.marks === "object"
+          ? saved.marks : {}
+      };
+    }
+  } catch (error) {
+    console.warn("Could not load saved data.", error);
+  }
+  return defaultState();
+}
 
-function showView(view) {
-  const target = $(`#view-${view}`);
-  if (!target) return;
+let state = loadState();
+let toastTimer;
 
-  $$(".view").forEach(section => section.classList.remove("active"));
-  target.classList.add("active");
+const $ = id => document.getElementById(id);
 
-  $$(".nav-link[data-view]").forEach(button => {
-    button.classList.toggle("active", button.dataset.view === view);
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    return true;
+  } catch (error) {
+    console.error("Saving failed:", error);
+    showToast("Could not save data. Check your browser storage.");
+    return false;
+  }
+}
+
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[char]);
+}
+
+function showToast(message) {
+  const toast = $("toast");
+  toast.textContent = message;
+  toast.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove("show"), 2800);
+}
+
+function setMessage(id, message, isError = false) {
+  const el = $(id);
+  if (!el) return;
+  el.textContent = message;
+  el.classList.toggle("error", isError);
+}
+
+function subjectById(id) {
+  return SUBJECTS.find(subject => subject.id === id);
+}
+
+function safeRecords() {
+  return state.attendance.filter(record =>
+    subjectById(record.subject) &&
+    ["lecture", "lab"].includes(record.type) &&
+    ["present", "absent"].includes(record.status) &&
+    (record.type !== "lab" || subjectById(record.subject).lab)
+  );
+}
+
+function recordsFor(subjectId, type) {
+  return safeRecords().filter(record =>
+    record.subject === subjectId && record.type === type
+  );
+}
+
+function statsFor(subjectId, type) {
+  const records = recordsFor(subjectId, type);
+  const present = records.filter(r => r.status === "present").length;
+  return {
+    total: records.length,
+    present,
+    absent: records.length - present,
+    percent: records.length ? Math.round(present / records.length * 100) : 0
+  };
+}
+
+function overallStats() {
+  const records = safeRecords();
+  const present = records.filter(r => r.status === "present").length;
+  return {
+    total: records.length,
+    present,
+    absent: records.length - present,
+    percent: records.length ? Math.round(present / records.length * 100) : 0
+  };
+}
+
+function combinedStats(subjectId) {
+  const records = safeRecords().filter(r => r.subject === subjectId);
+  const present = records.filter(r => r.status === "present").length;
+  return {
+    total: records.length,
+    present,
+    percent: records.length ? Math.round(present / records.length * 100) : 0
+  };
+}
+
+function formatDate(dateString) {
+  if (!dateString) return "—";
+  const parts = dateString.split("-").map(Number);
+  if (parts.length !== 3 || parts.some(n => !n)) return dateString;
+  return new Date(parts[0], parts[1] - 1, parts[2])
+    .toLocaleDateString("en-GB", {
+      day: "2-digit", month: "short", year: "numeric"
+    });
+}
+
+/* Menu and page navigation */
+
+function closeSidebar() {
+  $("sidebar").classList.remove("open");
+  $("overlay").classList.remove("show");
+}
+
+function openSidebar() {
+  $("sidebar").classList.add("open");
+  $("overlay").classList.add("show");
+}
+
+function showPage(pageName) {
+  const validPages = [
+    "dashboard", "profile", "attendance", "survey", "result", "subjects"
+  ];
+  if (!validPages.includes(pageName)) return;
+
+  document.querySelectorAll(".page").forEach(page => {
+    page.classList.toggle("active", page.id === `page-${pageName}`);
   });
 
-  const titles = {
-    overview:"Overview",
-    classes:"Online classes",
-    attendance:"Attendance records",
-    timetable:"Timetable",
-    reports:"Reports & analytics",
-    settings:"Settings"
+  document.querySelectorAll(".nav-link").forEach(link => {
+    link.classList.toggle("active", link.dataset.page === pageName);
+  });
+
+  const labels = {
+    dashboard: "Dashboard",
+    profile: "Profile",
+    attendance: "Total Attendance",
+    survey: "Survey",
+    result: "Result Card",
+    subjects: "Subjects & Labs"
   };
 
-  $("#pageTitle").textContent = titles[view] || "Overview";
+  $("pageLabel").textContent = labels[pageName];
+  closeSidebar();
 
-  $("#greeting").innerHTML = view === "overview"
-    ? `Good evening, ${escapeHTML($("#profileName").textContent)} <span class="gold">✦</span>`
-    : escapeHTML(titles[view] || "Overview");
+  if (pageName === "dashboard") renderDashboard();
+  if (pageName === "profile") fillProfileForm();
+  if (pageName === "attendance") renderAttendance();
+  if (pageName === "survey") renderSurveys();
+  if (pageName === "result") renderResults();
+  if (pageName === "subjects") renderAllSubjects();
 
-  $("#sidebar").classList.remove("open");
-  window.scrollTo({top:0,behavior:"smooth"});
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
+
+$("openMenu").addEventListener("click", () => {
+  $("welcome").classList.add("hidden");
+  $("app").classList.remove("hidden");
+  showPage("dashboard");
+
+  if (window.innerWidth <= 760) openSidebar();
+});
+
+$("menuToggle").addEventListener("click", openSidebar);
+$("closeMenu").addEventListener("click", closeSidebar);
+$("overlay").addEventListener("click", closeSidebar);
+
+document.querySelectorAll(".nav-link").forEach(button => {
+  button.addEventListener("click", () => showPage(button.dataset.page));
+});
+
+document.querySelectorAll("[data-goto]").forEach(button => {
+  button.addEventListener("click", () => showPage(button.dataset.goto));
+});
+
+/* Subject dropdowns */
+
+function populateSubjectDropdowns() {
+  const options = SUBJECTS.map(subject =>
+    `<option value="${subject.id}">${escapeHTML(subject.name)}</option>`
+  ).join("");
+
+  $("attSubject").innerHTML = options;
+  $("surveySubject").innerHTML = options;
+  updateClassTypeOptions();
+}
+
+function updateClassTypeOptions() {
+  const subject = subjectById($("attSubject").value);
+  const labOption = [...$("attType").options]
+    .find(option => option.value === "lab");
+
+  if (labOption) {
+    labOption.disabled = !subject || !subject.lab;
+    if (!subject || !subject.lab) $("attType").value = "lecture";
+  }
+}
+
+$("attSubject").addEventListener("change", updateClassTypeOptions);
 
 /* Dashboard */
 
-function renderSubjects() {
-  $("#subjectList").innerHTML = courses.map(course => `
-    <div>
-      <div class="subject-top">
-        <span class="subject-name">
-          <i class="subject-dot" style="background:${course.color}"></i>
-          ${escapeHTML(course.name)}
-        </span>
-        <span class="subject-percent">${course.pct}%</span>
-      </div>
-      <div class="subject-track">
-        <span style="width:${course.pct}%;background:${course.color}"></span>
-      </div>
-      <div class="subject-caption">
-        ${course.attended} of ${course.total} classes attended
-        ${course.pct <= 75 ? " · At the example minimum" : ""}
-      </div>
-    </div>
-  `).join("");
+function renderDashboard() {
+  const profile = state.profile;
+  const firstName = (profile.name || "Student").trim().split(/\s+/)[0];
 
-  $("#reportCourses").innerHTML = courses.map(course => `
-    <div class="report-course">
-      <div>
-        <strong>${escapeHTML(course.name)}</strong>
-        <small>${course.code} · ${course.attended}/${course.total} attended</small>
-      </div>
-      <div class="report-bar">
-        <span style="width:${course.pct}%;background:${course.color}"></span>
-      </div>
-      <div class="report-percent"
-           style="color:${course.pct<=75?"#c05669":"#41475a"}">
-        ${course.pct}%
-      </div>
-    </div>
-  `).join("");
-}
+  $("greeting").textContent = `Welcome back, ${firstName}!`;
+  $("statSubjects").textContent = SUBJECTS.length;
 
-function renderUpcoming() {
-  const upcoming = [
-    {course:courses[0],when:"Today"},
-    {course:courses[1],when:"Today"},
-    {course:courses[2],when:"Tomorrow"}
-  ];
+  const overall = overallStats();
+  $("statAttendance").textContent = `${overall.percent}%`;
+  $("statPresent").textContent = overall.present;
+  $("statSessions").textContent = `Out of ${overall.total} sessions`;
 
-  $("#upcomingList").innerHTML = upcoming.map(item => `
-    <div class="upcoming-item">
-      <div class="course-icon"
-           style="background:${item.course.pale};color:${item.course.color}">
-        ${item.course.icon}
-      </div>
-      <div class="course-copy">
-        <strong>${escapeHTML(item.course.name)}</strong>
-        <small>${escapeHTML(item.course.teacher)} · ${item.when}</small>
-      </div>
-      <div class="session-time">
-        <strong>${item.course.time}</strong>
-        <small>Online session</small>
-      </div>
-      <button class="join-small" data-join="${item.course.id}">Join</button>
-    </div>
-  `).join("");
-}
+  const alerts = SUBJECTS.filter(subject => {
+    const stats = combinedStats(subject.id);
+    return stats.total > 0 && stats.percent < 75;
+  }).length;
 
-/* Online classes */
+  $("statAlerts").textContent = alerts;
 
-function renderClasses() {
-  const search = ($("#classSearch")?.value || "").toLowerCase().trim();
-
-  const filtered = courses.filter(course =>
-    `${course.name} ${course.code} ${course.teacher}`
-      .toLowerCase().includes(search)
-  );
-
-  $("#classGrid").innerHTML = filtered.length
-    ? filtered.map(course => `
-      <article class="class-card">
-        <div class="class-card-top">
-          <div class="course-icon"
-               style="width:44px;height:44px;background:${course.pale};color:${course.color}">
-            ${course.icon}
+  $("dashboardSubjects").innerHTML = SUBJECTS.map(subject => {
+    const stats = statsFor(subject.id, "lecture");
+    return `
+      <div class="subject-row">
+        <div>
+          <div class="subject-title">
+            <span>${escapeHTML(subject.name)}</span>
+            <span>${stats.present}/${stats.total} classes</span>
           </div>
-          <span class="tag">ONLINE</span>
-        </div>
-        <h3>${escapeHTML(course.name)}</h3>
-        <span class="course-code">${course.code} · Section A</span>
-        <p>${escapeHTML(course.description)}</p>
-        <div class="class-card-bottom">
-          <div>
-            <strong>${course.time}</strong>
-            <small>${course.day} · ${course.duration}</small>
+          <div class="progress-track">
+            <div class="progress-fill" style="width:${stats.percent}%"></div>
           </div>
-          <button class="btn btn-primary" data-join="${course.id}">
-            Join class ↗
-          </button>
         </div>
-      </article>
-    `).join("")
-    : `<article class="panel"><h2>No classes found</h2><p class="muted">Try another search.</p></article>`;
+        <div class="progress-percent">${stats.percent}%</div>
+      </div>`;
+  }).join("");
+
+  $("donutValue").textContent = `${overall.percent}%`;
+  $("attendanceDonut").style.background =
+    `conic-gradient(var(--purple) ${overall.percent}%, #edeaf9 ${overall.percent}%)`;
+
+  if (!overall.total) {
+    $("dashboardAlert").textContent =
+      "No attendance records yet. Open Total Attendance to record your first class.";
+  } else if (alerts > 0) {
+    $("dashboardAlert").textContent =
+      `${alerts} subject(s) are below 75%. Attend upcoming classes to improve your percentage.`;
+  } else {
+    $("dashboardAlert").textContent =
+      "Your recorded attendance is on track. Keep attending your classes!";
+  }
 }
 
-/* Attendance table */
+/* Student profile */
 
-function renderAttendance() {
-  const filter = $("#statusFilter").value;
-
-  const filtered = records.filter(record =>
-    filter === "all" || record.status === filter
-  );
-
-  $("#attendanceTable").innerHTML = filtered.map(record => `
-    <tr>
-      <td>
-        <strong>${escapeHTML(record.course)}</strong>
-        <small>${record.code}</small>
-      </td>
-      <td>${new Date(record.date+"T12:00:00").toLocaleDateString("en-GB", {
-        day:"2-digit",month:"short",year:"numeric"
-      })}</td>
-      <td>${escapeHTML(record.teacher)}</td>
-      <td>${record.duration}</td>
-      <td><span class="status ${record.status.toLowerCase()}">${record.status}</span></td>
-    </tr>
-  `).join("");
-
-  $("#recordCount").textContent =
-    `Showing ${filtered.length} sample record${filtered.length===1?"":"s"}`;
+function fillProfileForm() {
+  const p = state.profile;
+  $("studentName").value = p.name || "";
+  $("rollNumber").value = p.roll || "";
+  $("studentEmail").value = p.email || "";
+  $("studentProgram").value = p.program || "";
+  $("studentSemester").value = p.semester || "1st Semester";
+  $("studentUniversity").value = p.university || "";
 }
 
-/* Weekly timetable */
+function renderProfileHeader() {
+  const name = state.profile.name || "Student Name";
+  const initial = name.trim().charAt(0).toUpperCase() || "S";
 
-function renderTimetable() {
-  $("#timetableGrid").innerHTML = Object.entries(schedule).map(([day,events]) => `
-    <div class="day-column">
-      <div class="day-title">${day}<small>${events.length} session${events.length===1?"":"s"}</small></div>
-      ${events.map(event => `
-        <div class="event"
-             style="background:${event.pale};border-color:${event.color};color:#454b60">
-          <strong>${escapeHTML(event.name)}</strong>
-          <small>${event.time}</small>
-          <small>${event.duration} · Online</small>
-        </div>
-      `).join("")}
-    </div>
-  `).join("");
+  $("sideName").textContent = name;
+  $("sideAvatar").textContent = initial;
+  $("topAvatar").textContent = initial;
+  $("profileHeading").textContent = name;
+  $("profileAvatar").textContent = initial;
 }
 
-/* Attendance chart */
+$("profileForm").addEventListener("submit", event => {
+  event.preventDefault();
 
-function drawChart(range="week") {
-  const values = range === "week"
-    ? [72,78,75,88,82,91,86]
-    : [68,72,70,77,75,81,78,84,80,87,82,86];
-
-  const labels = range === "week"
-    ? ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"]
-    : ["Sep 12","Sep 15","Sep 18","Sep 21","Sep 24","Sep 27",
-       "Sep 30","Oct 3","Oct 5","Oct 7","Oct 9","Oct 11"];
-
-  const width = 700;
-  const height = 220;
-  const padding = 8;
-
-  const points = values.map((value,index) => ({
-    x:padding + index * (width-2*padding)/(values.length-1),
-    y:height - value/100*height
-  }));
-
-  const line = points.map((point,index) =>
-    `${index===0?"M":"L"} ${point.x} ${point.y}`
-  ).join(" ");
-
-  $("#chartLine").setAttribute("d",line);
-  $("#chartFill").setAttribute(
-    "d",
-    `${line} L ${points[points.length-1].x} ${height} L ${points[0].x} ${height} Z`
-  );
-
-  $("#chartDots").innerHTML = points.map(point => `
-    <circle cx="${point.x}" cy="${point.y}" r="4"
-      fill="white" stroke="#c5a04d" stroke-width="3"/>
-  `).join("");
-
-  $("#chartLabels").innerHTML = labels.map(label =>
-    `<span>${label}</span>`
-  ).join("");
-
-  const average = values.reduce((sum,value) => sum+value,0)/values.length;
-  $("#chartAverage").textContent = `${average.toFixed(1)}%`;
-}
-
-/* Modal and class joining */
-
-function openModal(content) {
-  $("#modalContent").innerHTML = content;
-  $("#modalBackdrop").classList.add("open");
-  $("#modalBackdrop").setAttribute("aria-hidden","false");
-}
-
-function closeModal() {
-  $("#modalBackdrop").classList.remove("open");
-  $("#modalBackdrop").setAttribute("aria-hidden","true");
-}
-
-function joinClass(id) {
-  const course = courses.find(item => item.id === id);
-  if (!course) return;
-
-  openModal(`
-    <div class="modal-kicker">ONLINE CLASS SESSION</div>
-    <h2 id="modalTitle">${escapeHTML(course.name)}</h2>
-    <p>${escapeHTML(course.description)}</p>
-    <div class="modal-info-grid">
-      <div class="modal-info"><small>Instructor</small><strong>${escapeHTML(course.teacher)}</strong></div>
-      <div class="modal-info"><small>Schedule</small><strong>${course.day}, ${course.time}</strong></div>
-      <div class="modal-info"><small>Sample attendance</small><strong>${course.pct}%</strong></div>
-      <div class="modal-info"><small>Session type</small><strong>Online lecture</strong></div>
-    </div>
-    <p><strong>Demo notice:</strong> This prototype does not connect to Zoom, Teams or a university meeting service. Continuing demonstrates the class-launch flow only.</p>
-    <div class="modal-actions">
-      <button class="btn btn-secondary" id="cancelJoin">Cancel</button>
-      <button class="btn btn-primary" id="confirmJoin">Continue to demo ↗</button>
-    </div>
-  `);
-
-  $("#cancelJoin").addEventListener("click",closeModal);
-
-  $("#confirmJoin").addEventListener("click",() => {
-    closeModal();
-    openModal(`
-      <div class="modal-kicker">DEMO SESSION</div>
-      <h2 id="modalTitle">You're ready to learn</h2>
-      <p>This simulated class launch does not establish attendance. Connect an approved meeting provider and secure attendance verification service for real classes.</p>
-      <div class="modal-info">
-        <small>Selected course</small>
-        <strong>${escapeHTML(course.name)}</strong>
-      </div>
-      <div class="modal-actions">
-        <button class="btn btn-primary" id="finishDemo">Got it</button>
-      </div>
-    `);
-    $("#finishDemo").addEventListener("click",closeModal);
-  });
-}
-
-/* QR attendance preview */
-
-function openQR(id) {
-  const course = courses.find(item => item.id === id);
-
-  openModal(`
-    <div class="modal-kicker">DEMO CHECK-IN</div>
-    <h2 id="modalTitle">Online session check-in</h2>
-    <p>This QR preview is illustrative. It does not verify student identity or create an official attendance record.</p>
-    <div style="display:grid;place-items:center;padding:24px;background:#fafbfe;border:1px solid #eceef4;border-radius:12px;margin:18px 0">
-      <div style="width:140px;height:140px;display:grid;place-items:center;border:8px solid #18213b;background:white;font-size:32px;font-weight:800;color:#18213b">▦ ▦<br>▦ ▦</div>
-      <strong style="margin-top:18px">${escapeHTML(course?.name || "Online class")}</strong>
-      <small style="margin-top:6px;color:#999">DEMO CODE: AX-2026</small>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-secondary" id="cancelQR">Cancel</button>
-      <button class="btn btn-primary" id="simulateQR">Simulate check-in</button>
-    </div>
-  `);
-
-  $("#cancelQR").addEventListener("click",closeModal);
-  $("#simulateQR").addEventListener("click",() => {
-    closeModal();
-    notify("Demo check-in complete. No official record was created.");
-  });
-}
-
-/* Attendance goal calculator */
-
-function openCalculator() {
-  openModal(`
-    <div class="modal-kicker">ATTENDANCE PLANNER</div>
-    <h2 id="modalTitle">Calculate your attendance goal</h2>
-    <p>Estimate how many consecutive classes you need to attend to reach a target.</p>
-    <div class="calculator-fields">
-      <label>Classes attended<input id="calcAttended" type="number" min="0" value="18"></label>
-      <label>Total classes held<input id="calcTotal" type="number" min="1" value="24"></label>
-      <label>Required attendance
-        <select id="calcTarget">
-          <option value="75">75%</option>
-          <option value="80">80%</option>
-          <option value="85">85%</option>
-          <option value="90">90%</option>
-        </select>
-      </label>
-      <label>Future classes already missed<input id="calcMissed" type="number" min="0" value="0"></label>
-    </div>
-    <div class="calculator-result">
-      <strong id="calcResult">6 classes</strong>
-      <p id="calcExplanation"></p>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-secondary" id="closeCalculator">Close</button>
-      <button class="btn btn-primary" id="recalculate">Calculate</button>
-    </div>
-  `);
-
-  const calculate = () => {
-    const attended = Math.max(0,Number($("#calcAttended").value)||0);
-    const total = Math.max(1,Number($("#calcTotal").value)||1);
-    const missed = Math.max(0,Number($("#calcMissed").value)||0);
-    const target = Number($("#calcTarget").value)/100;
-
-    const validAttended = Math.min(attended,total);
-    const effectiveTotal = total+missed;
-    const currentPercentage = validAttended/effectiveTotal*100;
-
-    let needed;
-    if (target === 1) {
-      needed = validAttended >= effectiveTotal ? 0 : Infinity;
-    } else {
-      needed = Math.max(0,Math.ceil(
-        (target*effectiveTotal-validAttended)/(1-target)
-      ));
-    }
-
-    $("#calcResult").textContent = needed === Infinity
-      ? "Target unavailable"
-      : needed === 0 ? "Target met" : `${needed} class${needed===1?"":"es"}`;
-
-    $("#calcExplanation").textContent = needed === Infinity
-      ? "A 100% target requires every class to be attended; after an absence, it cannot be recovered by attending future classes alone."
-      : needed === 0
-        ? `Your estimated attendance is ${currentPercentage.toFixed(1)}%, meeting the selected target.`
-        : `Attend the next ${needed} classes consecutively to reach ${target*100}% or more, assuming no additional absences.`;
+  state.profile = {
+    name: $("studentName").value.trim() || "Student Name",
+    roll: $("rollNumber").value.trim(),
+    email: $("studentEmail").value.trim(),
+    program: $("studentProgram").value.trim(),
+    semester: $("studentSemester").value,
+    university: $("studentUniversity").value.trim()
   };
 
-  $("#closeCalculator").addEventListener("click",closeModal);
-  $("#recalculate").addEventListener("click",calculate);
-  calculate();
+  if (saveState()) {
+    renderProfileHeader();
+    renderDashboard();
+    setMessage("profileMessage", "Profile saved successfully.");
+    showToast("Profile updated.");
+  }
+});
+
+/* Attendance management */
+
+$("attendanceForm").addEventListener("submit", event => {
+  event.preventDefault();
+
+  const subjectId = $("attSubject").value;
+  const type = $("attType").value;
+  const status = $("attStatus").value;
+  const date = $("attDate").value;
+  const subject = subjectById(subjectId);
+
+  if (!subject || !date) {
+    setMessage("attendanceMessage", "Please select a subject and date.", true);
+    return;
+  }
+
+  if (type === "lab" && !subject.lab) {
+    setMessage("attendanceMessage", "This subject does not have a lab.", true);
+    return;
+  }
+
+  // Avoid accidentally recording the same class twice.
+  const duplicate = safeRecords().some(record =>
+    record.subject === subjectId &&
+    record.type === type &&
+    record.date === date
+  );
+
+  if (duplicate) {
+    setMessage(
+      "attendanceMessage",
+      "A record already exists for this subject, class type and date. Delete it first to change it.",
+      true
+    );
+    return;
+  }
+
+  state.attendance.push({
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    subject: subjectId,
+    type,
+    status,
+    date
+  });
+
+  if (saveState()) {
+    renderAttendance();
+    renderDashboard();
+    renderAllSubjects();
+    setMessage("attendanceMessage", "Attendance record saved successfully.");
+    showToast("Attendance updated.");
+  }
+});
+
+function renderAttendance() {
+  const overall = overallStats();
+
+  $("attTotal").textContent = overall.total;
+  $("attPresent").textContent = overall.present;
+  $("attAbsent").textContent = overall.absent;
+  $("attPercent").textContent = `${overall.percent}%`;
+
+  $("attendanceTable").innerHTML = SUBJECTS.map(subject => {
+    const lecture = statsFor(subject.id, "lecture");
+    const lab = subject.lab ? statsFor(subject.id, "lab") : null;
+    const combined = combinedStats(subject.id);
+
+    return `
+      <tr>
+        <td>${escapeHTML(subject.name)}</td>
+        <td>${lecture.present}/${lecture.total}</td>
+        <td>${lecture.percent}%</td>
+        <td>${lab ? `${lab.present}/${lab.total}` : "N/A"}</td>
+        <td>${lab ? `${lab.percent}%` : "N/A"}</td>
+        <td><strong>${combined.percent}%</strong></td>
+      </tr>`;
+  }).join("");
+
+  const records = [...safeRecords()].sort((a, b) =>
+    b.date.localeCompare(a.date) || b.id.localeCompare(a.id)
+  );
+
+  $("historyTable").innerHTML = records.length ? records.map(record => {
+    const subject = subjectById(record.subject);
+    return `
+      <tr>
+        <td>${escapeHTML(formatDate(record.date))}</td>
+        <td>${escapeHTML(subject.name)}</td>
+        <td>${record.type === "lab" ? "Lab" : "Lecture"}</td>
+        <td><span class="status-badge ${record.status === "present" ? "status-present" : "status-absent"}">${record.status === "present" ? "Present" : "Absent"}</span></td>
+        <td><button class="delete-btn" data-delete="${escapeHTML(record.id)}">Delete</button></td>
+      </tr>`;
+  }).join("") : `
+    <tr><td colspan="5" class="empty-cell">No attendance records yet. Record your first class above.</td></tr>`;
 }
 
-/* CSV downloads */
+$("historyTable").addEventListener("click", event => {
+  const button = event.target.closest("[data-delete]");
+  if (!button) return;
 
-function downloadCSV(filename,rows) {
-  const csv = rows.map(row =>
-    row.map(value => `"${String(value ?? "").replace(/"/g,'""')}"`).join(",")
-  ).join("\r\n");
+  const id = button.dataset.delete;
+  const record = state.attendance.find(item => item.id === id);
+  if (!record) return;
 
-  const blob = new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});
+  if (!confirm("Delete this attendance record?")) return;
+
+  state.attendance = state.attendance.filter(item => item.id !== id);
+  if (saveState()) {
+    renderAttendance();
+    renderDashboard();
+    renderAllSubjects();
+    showToast("Attendance record deleted.");
+  }
+});
+
+/* CSV attendance export */
+
+$("exportCsv").addEventListener("click", () => {
+  const records = [...safeRecords()].sort((a, b) => a.date.localeCompare(b.date));
+
+  if (!records.length) {
+    showToast("Record some attendance before exporting.");
+    return;
+  }
+
+  const rows = [
+    ["Date", "Subject", "Class Type", "Status"],
+    ...records.map(record => [
+      record.date,
+      subjectById(record.subject).name,
+      record.type === "lab" ? "Lab" : "Lecture",
+      record.status
+    ])
+  ];
+
+  const csv = rows.map(row => row.map(value =>
+    `"${String(value).replace(/"/g, '""')}"`
+  ).join(",")).join("\r\n");
+
+  const blob = new Blob(["\uFEFF" + csv], {
+    type: "text/csv;charset=utf-8;"
+  });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
 
   link.href = url;
-  link.download = filename;
+  link.download = "attendx-attendance.csv";
   document.body.appendChild(link);
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
+
+  showToast("Attendance CSV exported.");
+});
+
+/* Subjects and labs cards */
+
+function renderAllSubjects() {
+  $("allSubjects").innerHTML = SUBJECTS.map(subject => {
+    const lecture = statsFor(subject.id, "lecture");
+    const lab = subject.lab ? statsFor(subject.id, "lab") : null;
+    const combined = combinedStats(subject.id);
+
+    return `
+      <article class="course-card">
+        <div class="course-top">
+          <div class="course-icon">${escapeHTML(subject.icon)}</div>
+          <div>
+            <h2>${escapeHTML(subject.name)}</h2>
+            <p>${subject.lab ? "Lecture + Practical Lab" : "Lecture only"}</p>
+          </div>
+          <div class="course-percent">${combined.percent}%</div>
+        </div>
+        <div class="course-detail">
+          <div>
+            <span>Lecture attendance</span>
+            <strong>${lecture.present}/${lecture.total} · ${lecture.percent}%</strong>
+          </div>
+          <div>
+            <span>${subject.lab ? "Lab attendance" : "Lab attendance"}</span>
+            <strong>${lab ? `${lab.present}/${lab.total} · ${lab.percent}%` : "Not applicable"}</strong>
+          </div>
+        </div>
+        <div style="margin-top:16px" class="progress-track">
+          <div class="progress-fill" style="width:${combined.percent}%"></div>
+        </div>
+        <button class="text-btn" style="margin-top:15px;padding:0" data-goto="attendance">
+          Manage attendance →
+        </button>
+      </article>`;
+  }).join("");
 }
 
-function exportAttendance() {
-  downloadCSV("attendx-attendance-demo.csv",[
-    ["Course","Code","Date","Instructor","Duration","Status"],
-    ...records.map(record => [
-      record.course,record.code,record.date,
-      record.teacher,record.duration,record.status
-    ])
-  ]);
-  notify("Sample attendance CSV downloaded.","↓");
-}
+/* Course survey */
 
-function exportTimetable() {
-  const rows = [["Day","Course","Time","Duration","Mode"]];
+$("surveyForm").addEventListener("submit", event => {
+  event.preventDefault();
 
-  Object.entries(schedule).forEach(([day,events]) => {
-    events.forEach(event => rows.push([
-      day,event.name,event.time,event.duration,"Online"
-    ]));
+  const selectedRating = document.querySelector('input[name="rating"]:checked');
+  if (!selectedRating) {
+    setMessage("surveyMessage", "Please choose a rating.", true);
+    return;
+  }
+
+  state.surveys.unshift({
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    subject: $("surveySubject").value,
+    rating: Number(selectedRating.value),
+    positive: $("surveyPositive").value.trim(),
+    suggestion: $("surveySuggestion").value.trim(),
+    date: new Date().toISOString().slice(0, 10)
   });
 
-  downloadCSV("attendx-timetable-demo.csv",rows);
-  notify("Sample timetable CSV downloaded.","↓");
+  if (saveState()) {
+    $("surveyForm").reset();
+    renderSurveys();
+    setMessage("surveyMessage", "Thank you! Your survey has been saved in this browser.");
+    showToast("Survey submitted.");
+  }
+});
+
+function renderSurveys() {
+  $("surveyHistory").innerHTML = state.surveys.length
+    ? state.surveys.map(survey => {
+        const subject = subjectById(survey.subject);
+        if (!subject) return "";
+
+        return `
+          <article class="survey-entry">
+            <strong>${escapeHTML(subject.name)}</strong>
+            <p>Rating: ${"★".repeat(Math.max(0, Math.min(5, survey.rating)))}${"☆".repeat(5 - Math.max(0, Math.min(5, survey.rating)))} · ${escapeHTML(formatDate(survey.date))}</p>
+            ${survey.positive ? `<p><b>Working well:</b> ${escapeHTML(survey.positive)}</p>` : ""}
+            ${survey.suggestion ? `<p><b>Suggestion:</b> ${escapeHTML(survey.suggestion)}</p>` : ""}
+          </article>`;
+      }).join("")
+    : '<p class="muted">You have not submitted any surveys yet.</p>';
 }
 
-/* Demo attendance assistant */
+/* Result card: editable marks and estimated grades */
 
-function assistantAnswer(question) {
-  const q = question.toLowerCase();
+function gradeFor(mark) {
+  if (mark >= 90) return { grade: "A+", points: 4.00 };
+  if (mark >= 85) return { grade: "A", points: 4.00 };
+  if (mark >= 80) return { grade: "A-", points: 3.70 };
+  if (mark >= 75) return { grade: "B+", points: 3.30 };
+  if (mark >= 70) return { grade: "B", points: 3.00 };
+  if (mark >= 65) return { grade: "B-", points: 2.70 };
+  if (mark >= 60) return { grade: "C+", points: 2.30 };
+  if (mark >= 55) return { grade: "C", points: 2.00 };
+  if (mark >= 50) return { grade: "D", points: 1.00 };
+  return { grade: "F", points: 0.00 };
+}
 
-  if (q.includes("low") || q.includes("risk") || q.includes("below")) {
-    const low = courses.filter(course => course.pct < 80);
+function renderResults() {
+  $("resultTable").innerHTML = SUBJECTS.map(subject => {
+    const mark = state.marks[subject.id] ?? "";
+    const validMark = mark !== "" && Number.isFinite(Number(mark)) &&
+      Number(mark) >= 0 && Number(mark) <= 100;
+    const grade = validMark ? gradeFor(Number(mark)) : null;
 
-    return low.length
-      ? `Keep an eye on ${low.map(course=>`${course.name} (${course.pct}%)`).join(" and ")}. These are illustrative figures. Confirm official attendance and university requirements with your instructor.`
-      : "No sample courses are below 80%.";
-  }
+    return `
+      <tr>
+        <td>${escapeHTML(subject.name)}</td>
+        <td><input aria-label="${escapeHTML(subject.name)} marks" type="number" min="0" max="100" step="1" class="mark-input" data-mark="${subject.id}" value="${escapeHTML(mark)}" placeholder="0–100" style="width:100px;padding:9px"></td>
+        <td>${grade ? grade.grade : "—"}</td>
+        <td>${grade ? grade.points.toFixed(2) : "—"}</td>
+      </tr>`;
+  }).join("");
 
-  if (q.includes("improve") || q.includes("increase") || q.includes("better")) {
-    return "Attend every upcoming online class, join on time, and check your records regularly. If you were present but marked absent, use your university's official correction process.";
-  }
+  updateResultSummary();
+}
 
-  if (q.includes("database")) {
-    const course = courses[0];
-    return `Database Systems currently shows ${course.pct}% in this demo, with ${course.attended} of ${course.total} sample classes attended.`;
-  }
+function updateResultSummary() {
+  const values = SUBJECTS.map(subject => state.marks[subject.id])
+    .filter(value => value !== undefined && value !== "" &&
+      Number.isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 100)
+    .map(Number);
 
-  if (q.includes("how many") || q.includes("miss")) {
-    return "The number of classes you can miss depends on your course totals and your university's attendance policy. Use the Attendance Planner for an estimate.";
-  }
+  const total = values.reduce((sum, mark) => sum + mark, 0);
+  const average = values.length ? total / values.length : 0;
+  const gpa = values.length
+    ? values.reduce((sum, mark) => sum + gradeFor(mark).points, 0) / values.length
+    : 0;
 
-  if (q.includes("attendance") || q.includes("percentage") || q.includes("overall")) {
-    const attended = courses.reduce((sum,course)=>sum+course.attended,0);
-    const total = courses.reduce((sum,course)=>sum+course.total,0);
-    const percentage = attended/total*100;
+  $("marksTotal").textContent = `${total} / ${SUBJECTS.length * 100}`;
+  $("marksAverage").textContent = `${average.toFixed(1)}%`;
+  $("marksGpa").textContent = `${gpa.toFixed(2)} / 4.00`;
+}
 
-    return `Across the course sample data
+$("saveMarks").addEventListener("click", () => {
+  const newMarks = { ...state.marks };
+  const inputs = [...document.querySelectorAll("[data-mark]")];
+
+  for (const input of inputs) {
+    const value = input.value.trim();
+
+    if (value === "") {
+  
