@@ -4,277 +4,178 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#0b1020">
-  <title>AttendX | Smart University Attendance</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <title>AttendX | University Portal</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div class="app">
-    <aside class="sidebar" id="sidebar">
-      <a href="#" class="brand">
-        <span class="brand-icon">A<span>X</span></span>
-        <span>Attend<span class="gold">X</span><small>UNIVERSITY CLOUD</small></span>
-      </a>
+  <!-- First screen: Menu -->
+  <section id="welcome" class="welcome-screen">
+    <div class="welcome-card">
+      <div class="brand-mark">A<span>X</span></div>
+      <p class="eyebrow">UNIVERSITY STUDENT PORTAL</p>
+      <h1>Welcome to <span>AttendX</span></h1>
+      <p>One portal for your classes, attendance, results and student life.</p>
+      <button class="primary-btn" id="openMenu">☰ Open Menu</button>
+      <p class="welcome-foot">ONLINE LEARNING • SMART ATTENDANCE</p>
+    </div>
+  </section>
 
-      <p class="nav-label">WORKSPACE</p>
-      <nav>
-        <button class="nav-link active" data-view="overview">◫ <span>Overview</span></button>
-        <button class="nav-link" data-view="classes">▦ <span>Online classes</span></button>
-        <button class="nav-link" data-view="attendance">◷ <span>Attendance records</span></button>
-        <button class="nav-link" data-view="timetable">▤ <span>Timetable</span></button>
-        <button class="nav-link" data-view="reports">▥ <span>Reports & analytics</span></button>
-        <button class="nav-link" data-view="settings">⚙ <span>Settings</span></button>
+  <!-- Main application -->
+  <div id="app" class="app hidden">
+    <aside id="sidebar" class="sidebar">
+      <div class="brand"><span class="brand-mark small">A<span>X</span></span><div>AttendX<small>STUDENT PORTAL</small></div></div>
+      <button id="closeMenu" class="close-menu" aria-label="Close menu">✕</button>
+      <div class="student-mini">
+        <div class="avatar" id="sideAvatar">S</div>
+        <div><strong id="sideName">Student Name</strong><small>University Student</small></div>
+      </div>
+      <p class="nav-label">MAIN MENU</p>
+      <nav class="navigation">
+        <button class="nav-link active" data-page="dashboard">▦ <span>Dashboard</span></button>
+        <button class="nav-link" data-page="profile">♙ <span>Profile</span></button>
+        <button class="nav-link" data-page="attendance">◷ <span>Total Attendance</span></button>
+        <button class="nav-link" data-page="survey">☷ <span>Survey</span></button>
+        <button class="nav-link" data-page="result">▤ <span>Result Card</span></button>
+        <button class="nav-link" data-page="subjects">▣ <span>Subjects & Labs</span></button>
       </nav>
-
       <div class="sidebar-bottom">
-        <div class="help-card">
-          <span class="sparkle">✦</span>
-          <h3>Need some help?</h3>
-          <p>Ask your smart attendance assistant.</p>
-          <button id="openAI" class="text-btn">Open AI assistant ↗</button>
-        </div>
-        <div class="profile">
-          <div class="avatar">UN</div>
-          <div><strong id="profileName">Uswa Nazish</strong><small>Student · Demo account</small></div>
-        </div>
+        <div class="online-dot"></div> Online Learning Portal
+        <button id="resetData" class="reset-btn">Reset demo data</button>
       </div>
     </aside>
 
-    <main class="main">
+    <div id="overlay" class="overlay"></div>
+
+    <main class="main-area">
       <header class="topbar">
-        <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">☰</button>
-        <div class="breadcrumb">Workspace <span>/</span> <strong id="pageTitle">Overview</strong></div>
-        <div class="top-actions">
-          <span class="demo-badge"><i></i> DEMO MODE</span>
-          <button class="icon-button" id="notifications" aria-label="Notifications">♧</button>
-          <div class="avatar small-avatar">UN</div>
-        </div>
+        <button id="menuToggle" class="menu-toggle">☰ <span>Menu</span></button>
+        <div class="breadcrumb">Student Portal <span>/</span> <strong id="pageLabel">Dashboard</strong></div>
+        <div class="top-right"><span class="status-pill">● Demo mode</span><div class="avatar top-avatar" id="topAvatar">S</div></div>
       </header>
 
-      <div class="content">
-        <section class="welcome">
-          <div>
-            <p class="eyebrow">SUNDAY, OCTOBER 11, 2026</p>
-            <h1 id="greeting">Good evening, Uswa <span class="gold">✦</span></h1>
-            <p class="muted">Your online university attendance, all in one place.</p>
+      <div class="page-wrap">
+        <!-- DASHBOARD -->
+        <section class="page active" id="page-dashboard">
+          <div class="page-heading">
+            <div><p class="eyebrow">YOUR ACADEMIC OVERVIEW</p><h1 id="greeting">Welcome back!</h1>
+              <p class="muted">Track your classes, attendance and academic progress.</p></div>
+            <button class="primary-btn" data-goto="attendance">+ Manage Attendance</button>
           </div>
-          <button class="btn btn-primary" id="nextClass">↗ Join next class</button>
+
+          <div class="stats-grid">
+            <article class="stat-card"><div class="stat-icon purple">▦</div><span>Total Subjects</span><strong id="statSubjects">6</strong><small>Active courses</small></article>
+            <article class="stat-card"><div class="stat-icon green">✓</div><span>Overall Attendance</span><strong id="statAttendance">0%</strong><small id="attendanceHint">Across all lectures and labs</small></article>
+            <article class="stat-card"><div class="stat-icon blue">◷</div><span>Classes Attended</span><strong id="statPresent">0</strong><small id="statSessions">Out of 0 sessions</small></article>
+            <article class="stat-card"><div class="stat-icon amber">!</div><span>Attendance Alerts</span><strong id="statAlerts">0</strong><small>Subjects below 75%</small></article>
+          </div>
+
+          <div class="content-grid">
+            <section class="panel">
+              <div class="panel-heading"><div><h2>My Subjects</h2><p>Lecture attendance at a glance</p></div><button class="text-btn" data-goto="subjects">View all →</button></div>
+              <div id="dashboardSubjects" class="subject-list"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-heading"><div><h2>Attendance Summary</h2><p>Lectures and labs combined</p></div></div>
+              <div class="donut-wrap"><div class="donut" id="attendanceDonut"><div><strong id="donutValue">0%</strong><small>Attendance</small></div></div></div>
+              <div class="legend"><span><i class="dot present-dot"></i>Present</span><span><i class="dot absent-dot"></i>Absent</span></div>
+              <div class="alert-box" id="dashboardAlert">Start recording your attendance to see your progress.</div>
+            </section>
+          </div>
+          <section class="panel quick-panel"><h2>Quick Actions</h2><div class="quick-actions">
+            <button data-goto="attendance">◷ <span>Record Attendance</span></button>
+            <button data-goto="profile">♙ <span>Update Profile</span></button>
+            <button data-goto="survey">☷ <span>Submit Survey</span></button>
+            <button data-goto="result">▤ <span>View Result Card</span></button>
+          </div></section>
         </section>
 
-        <div class="notice" id="demoNotice">
-          <span>ⓘ</span>
-          <p><strong>Interactive demo.</strong> This website uses sample data. Class joins and QR check-ins are simulations, not official attendance verification.</p>
-          <button id="closeNotice" aria-label="Dismiss notice">×</button>
-        </div>
-
-        <!-- OVERVIEW -->
-        <section class="view active" id="view-overview">
-          <div class="stats">
-            <article class="stat-card">
-              <div class="stat-heading">Overall attendance <span class="stat-icon gold-bg">◔</span></div>
-              <h2>86.4<small>%</small></h2>
-              <p class="positive">● Above the 75% target</p>
-              <div class="progress"><span style="width:86.4%"></span></div>
-            </article>
-            <article class="stat-card">
-              <div class="stat-heading">Classes attended <span class="stat-icon blue-bg">✓</span></div>
-              <h2 id="attendedTotal">38</h2>
-              <p class="muted">Across all enrolled subjects</p>
-              <div class="stat-note">38 <span>/ 44 classes</span></div>
-            </article>
-            <article class="stat-card">
-              <div class="stat-heading">Classes missed <span class="stat-icon red-bg">↘</span></div>
-              <h2>6</h2>
-              <p class="muted">Review your missed sessions</p>
-              <button class="inline-link" data-goto="attendance">View records →</button>
-            </article>
-            <article class="stat-card">
-              <div class="stat-heading">Today's sessions <span class="stat-icon purple-bg">◉</span></div>
-              <h2>3</h2>
-              <p class="muted">Next class at 2:30 PM</p>
-              <button class="inline-link" data-goto="timetable">Open timetable →</button>
-            </article>
-          </div>
-
-          <div class="two-columns">
-            <article class="panel">
-              <div class="panel-heading">
-                <div><h2>Attendance overview</h2><p>Your sample attendance trend</p></div>
-                <select id="chartRange" class="control" aria-label="Chart range">
-                  <option value="week">Last 7 days</option>
-                  <option value="month">Last 30 days</option>
-                </select>
-              </div>
-              <div class="chart-summary"><strong id="chartAverage">81.7%</strong><span class="positive">↗ Sample trend</span></div>
-              <div class="chart">
-                <div class="y-labels"><span>100%</span><span>75%</span><span>50%</span><span>25%</span><span>0%</span></div>
-                <div class="chart-body">
-                  <div class="chart-lines"><i></i><i></i><i></i><i></i><i></i></div>
-                  <svg id="chartSvg" viewBox="0 0 700 220" preserveAspectRatio="none" aria-label="Attendance chart">
-                    <defs>
-                      <linearGradient id="fillGold" x1="0" x2="0" y1="0" y2="1">
-                        <stop offset="0%" stop-color="#d8b76a" stop-opacity=".3"/>
-                        <stop offset="100%" stop-color="#d8b76a" stop-opacity="0"/>
-                      </linearGradient>
-                    </defs>
-                    <path id="chartFill" fill="url(#fillGold)"></path>
-                    <path id="chartLine" fill="none" stroke="#c5a04d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
-                    <g id="chartDots"></g>
-                  </svg>
-                  <div class="x-labels" id="chartLabels"></div>
-                </div>
-              </div>
-            </article>
-
-            <article class="panel">
-              <div class="panel-heading">
-                <div><h2>Subject breakdown</h2><p>Attendance by course</p></div>
-                <button class="icon-button" data-goto="attendance" aria-label="All records">↗</button>
-              </div>
-              <div id="subjectList" class="subject-list"></div>
-              <button class="btn btn-secondary full-width" data-goto="attendance">View all records</button>
-            </article>
-          </div>
-
-          <div class="two-columns lower-grid">
-            <article class="panel">
-              <div class="panel-heading">
-                <div><h2>Upcoming online classes</h2><p>Keep your learning on schedule</p></div>
-                <button class="inline-link" data-goto="classes">View all →</button>
-              </div>
-              <div id="upcomingList"></div>
-            </article>
-            <article class="panel">
-              <div class="panel-heading"><div><h2>Attendance insight</h2><p>Your semester progress</p></div><span class="sparkle">✦</span></div>
-              <div class="insight">
-                <div class="ring"><strong>86<small>%</small></strong></div>
-                <div><strong>You're on track!</strong><p>Consistent class attendance can help you stay above your target.</p></div>
-              </div>
-              <div class="tip">✧ <span>Use the attendance calculator to estimate how many future classes you need to attend.</span></div>
-              <button class="btn btn-secondary full-width" id="openCalculator">Calculate attendance goal</button>
-            </article>
-          </div>
-        </section>
-
-        <!-- CLASSES -->
-        <section class="view" id="view-classes">
-          <div class="section-heading">
-            <div><h2>My online classes</h2><p>Review your courses and open the demo class flow.</p></div>
-            <input id="classSearch" class="control search" type="search" placeholder="Search classes..." aria-label="Search classes">
-          </div>
-          <div class="class-grid" id="classGrid"></div>
+        <!-- PROFILE -->
+        <section class="page" id="page-profile">
+          <div class="page-heading"><div><p class="eyebrow">PERSONAL INFORMATION</p><h1>Student Profile</h1><p class="muted">Manage your student details.</p></div></div>
+          <form id="profileForm" class="panel form-panel">
+            <div class="profile-banner"><div class="avatar profile-avatar" id="profileAvatar">S</div><div><h2 id="profileHeading">Student Name</h2><p>Your academic profile</p></div></div>
+            <div class="form-grid">
+              <label>Full name<input id="studentName" required maxlength="80" placeholder="Enter your full name"></label>
+              <label>Roll number<input id="rollNumber" maxlength="40" placeholder="e.g. BSCS-2026-01"></label>
+              <label>Email address<input id="studentEmail" type="email" maxlength="120" placeholder="student@example.com"></label>
+              <label>Degree / Program<input id="studentProgram" maxlength="80" placeholder="e.g. BS Computer Science"></label>
+              <label>Semester<select id="studentSemester"><option>1st Semester</option><option>2nd Semester</option><option>3rd Semester</option><option>4th Semester</option><option>5th Semester</option><option>6th Semester</option><option>7th Semester</option><option>8th Semester</option></select></label>
+              <label>University<input id="studentUniversity" maxlength="120" placeholder="University name"></label>
+            </div>
+            <button class="primary-btn" type="submit">Save Profile</button><span id="profileMessage" class="form-message"></span>
+          </form>
         </section>
 
         <!-- ATTENDANCE -->
-        <section class="view" id="view-attendance">
-          <div class="section-heading">
-            <div><h2>Attendance records</h2><p>Review attendance by course and session.</p></div>
-            <div class="actions">
-              <select id="statusFilter" class="control" aria-label="Filter status">
-                <option value="all">All statuses</option>
-                <option value="Present">Present</option>
-                <option value="Absent">Absent</option>
-                <option value="Late">Late</option>
-              </select>
-              <button class="btn btn-primary" id="exportAttendance">↓ Export CSV</button>
-            </div>
+        <section class="page" id="page-attendance">
+          <div class="page-heading"><div><p class="eyebrow">ATTENDANCE MANAGEMENT</p><h1>Total Attendance</h1><p class="muted">Record lectures and labs separately. Totals update automatically.</p></div></div>
+          <div class="stats-grid compact-stats">
+            <article class="stat-card"><span>Total Sessions</span><strong id="attTotal">0</strong></article>
+            <article class="stat-card"><span>Present</span><strong id="attPresent">0</strong></article>
+            <article class="stat-card"><span>Absent</span><strong id="attAbsent">0</strong></article>
+            <article class="stat-card"><span>Overall Percentage</span><strong id="attPercent">0%</strong></article>
           </div>
-          <article class="panel table-panel">
-            <div class="table-scroll">
-              <table>
-                <thead><tr><th>Course</th><th>Date</th><th>Instructor</th><th>Duration</th><th>Status</th></tr></thead>
-                <tbody id="attendanceTable"></tbody>
-              </table>
-            </div>
-            <div class="table-footer"><span id="recordCount">0 records</span><span>Sample data · Demo only</span></div>
-          </article>
+          <section class="panel">
+            <div class="panel-heading"><div><h2>Record a Class</h2><p>Each record represents one session.</p></div></div>
+            <form id="attendanceForm" class="attendance-form">
+              <label>Subject<select id="attSubject" required></select></label>
+              <label>Class type<select id="attType"><option value="lecture">Lecture</option><option value="lab">Lab / Practical</option></select></label>
+              <label>Date<input id="attDate" type="date" required></label>
+              <label>Status<select id="attStatus"><option value="present">Present</option><option value="absent">Absent</option></select></label>
+              <button class="primary-btn" type="submit">+ Save Record</button>
+            </form>
+            <p class="muted small-note">Labs are available only for Artificial Intelligence, Computer Networks and Information Security.</p>
+            <p id="attendanceMessage" class="form-message"></p>
+          </section>
+          <section class="panel">
+            <div class="panel-heading"><div><h2>Subject Attendance</h2><p>Lecture and lab percentages are calculated separately.</p></div></div>
+            <div class="table-scroll"><table><thead><tr><th>Subject</th><th>Lecture</th><th>Lecture %</th><th>Lab</th><th>Lab %</th><th>Combined %</th></tr></thead><tbody id="attendanceTable"></tbody></table></div>
+          </section>
+          <section class="panel">
+            <div class="panel-heading"><div><h2>Attendance History</h2><p>Delete an incorrect demo record if needed.</p></div><button id="exportCsv" class="secondary-btn">Export CSV ↓</button></div>
+            <div class="table-scroll"><table><thead><tr><th>Date</th><th>Subject</th><th>Type</th><th>Status</th><th>Action</th></tr></thead><tbody id="historyTable"></tbody></table></div>
+          </section>
         </section>
 
-        <!-- TIMETABLE -->
-        <section class="view" id="view-timetable">
-          <div class="section-heading">
-            <div><h2>Weekly timetable</h2><p>Your scheduled online lectures in Pakistan Standard Time.</p></div>
-            <button class="btn btn-primary" id="exportTimetable">↓ Export schedule</button>
-          </div>
-          <div id="timetableGrid" class="timetable-grid"></div>
+        <!-- SURVEY -->
+        <section class="page" id="page-survey">
+          <div class="page-heading"><div><p class="eyebrow">STUDENT VOICE</p><h1>Course Survey</h1><p class="muted">Share feedback about your online learning experience.</p></div></div>
+          <form id="surveyForm" class="panel form-panel">
+            <label>Choose subject<select id="surveySubject" required></select></label>
+            <label>Rate the teaching experience<div class="rating-options"><label><input type="radio" name="rating" value="5" required> 5 — Excellent</label><label><input type="radio" name="rating" value="4"> 4 — Very good</label><label><input type="radio" name="rating" value="3"> 3 — Good</label><label><input type="radio" name="rating" value="2"> 2 — Fair</label><label><input type="radio" name="rating" value="1"> 1 — Needs improvement</label></div></label>
+            <label>What is working well?<textarea id="surveyPositive" rows="3" maxlength="1000" placeholder="Share your thoughts..."></textarea></label>
+            <label>Suggestions for improvement<textarea id="surveySuggestion" rows="3" maxlength="1000" placeholder="Your suggestions..."></textarea></label>
+            <button class="primary-btn" type="submit">Submit Survey</button><p id="surveyMessage" class="form-message"></p>
+          </form>
+          <section class="panel"><div class="panel-heading"><div><h2>My Submitted Surveys</h2><p>Saved in this browser.</p></div></div><div id="surveyHistory" class="survey-history"></div></section>
         </section>
 
-        <!-- REPORTS -->
-        <section class="view" id="view-reports">
-          <div class="section-heading">
-            <div><h2>Reports & analytics</h2><p>Explore your sample semester attendance.</p></div>
-            <button class="btn btn-primary" id="reportDownload">↓ Download report</button>
-          </div>
-          <div class="stats report-stats">
-            <article class="stat-card"><div class="stat-heading">Tracked sessions</div><h2>44</h2><p class="muted">Across 5 courses</p></article>
-            <article class="stat-card"><div class="stat-heading">Overall attendance</div><h2>86.4<small>%</small></h2><p class="positive">Sample data</p></article>
-            <article class="stat-card"><div class="stat-heading">Late arrivals</div><h2>2</h2><p class="muted">Review punctuality</p></article>
-            <article class="stat-card"><div class="stat-heading">Required target</div><h2>75<small>%</small></h2><p class="muted">Example policy</p></article>
-          </div>
-          <article class="panel"><h2>Course performance</h2><p class="muted">Compare course attendance with the example target.</p><div id="reportCourses"></div></article>
-          <p class="muted small">Official attendance and academic eligibility must be confirmed by your university.</p>
+        <!-- RESULT CARD -->
+        <section class="page" id="page-result">
+          <div class="page-heading"><div><p class="eyebrow">ACADEMIC PERFORMANCE</p><h1>Result Card</h1><p class="muted">Enter your marks to calculate grades and GPA-style summary.</p></div><button id="printResults" class="secondary-btn">Print Result</button></div>
+          <div class="notice">Demo result card: enter your actual marks. These are not official university results.</div>
+          <section class="panel">
+            <div class="panel-heading"><div><h2>Subject Marks</h2><p>Marks obtained out of 100 per subject.</p></div><button id="saveMarks" class="primary-btn">Save Marks</button></div>
+            <div class="table-scroll"><table><thead><tr><th>Subject</th><th>Marks / 100</th><th>Grade</th><th>Grade Points</th></tr></thead><tbody id="resultTable"></tbody></table></div>
+            <div class="result-summary"><div><span>Total Marks</span><strong id="marksTotal">0 / 600</strong></div><div><span>Average</span><strong id="marksAverage">0%</strong></div><div><span>Estimated GPA</span><strong id="marksGpa">0.00 / 4.00</strong></div></div>
+            <p id="resultMessage" class="form-message"></p>
+          </section>
         </section>
 
-        <!-- SETTINGS -->
-        <section class="view" id="view-settings">
-          <div class="section-heading"><div><h2>Settings</h2><p>Customize your demo experience.</p></div></div>
-          <div class="settings-grid">
-            <article class="panel">
-              <h2>Profile</h2><p class="muted">Demo profile information</p>
-              <label>Full name<input class="control form-control" id="settingName" value="Uswa Nazish"></label>
-              <label>University email<input class="control form-control" id="settingEmail" type="email" value="student@example.edu"></label>
-              <button class="btn btn-primary" id="saveProfile">Save profile</button>
-            </article>
-            <article class="panel">
-              <h2>Preferences</h2><p class="muted">Choose your dashboard options</p>
-              <label class="toggle-row"><span><strong>Class reminders</strong><small>Remind me about upcoming sessions</small></span><input id="reminders" type="checkbox" checked></label>
-              <label class="toggle-row"><span><strong>Attendance alerts</strong><small>Warn when a subject is below 80%</small></span><input id="alerts" type="checkbox" checked></label>
-              <label class="toggle-row"><span><strong>Compact dashboard</strong><small>Use more compact cards</small></span><input id="compact" type="checkbox"></label>
-              <button class="btn btn-secondary" id="saveSettings">Save preferences</button>
-            </article>
-          </div>
+        <!-- SUBJECTS -->
+        <section class="page" id="page-subjects">
+          <div class="page-heading"><div><p class="eyebrow">YOUR COURSES</p><h1>Subjects & Labs</h1><p class="muted">Six subjects with individual lecture attendance. First three include labs.</p></div></div>
+          <div id="allSubjects" class="all-subjects-grid"></div>
         </section>
+
+        <footer class="footer">AttendX Student Portal <span>•</span> Frontend demonstration</footer>
       </div>
-
-      <footer class="footer"><span>© 2026 AttendX University Cloud</span><span>● Demo mode · Designed for online learning</span><span>Privacy-conscious by design</span></footer>
     </main>
   </div>
-
-  <!-- MODAL -->
-  <div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
-    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-      <button class="modal-close" id="modalClose" aria-label="Close">×</button>
-      <div id="modalContent"></div>
-    </section>
-  </div>
-
-  <!-- AI ASSISTANT -->
-  <aside class="assistant" id="assistant">
-    <div class="assistant-head">
-      <div class="assistant-logo">✦</div>
-      <div><strong>AttendX Assistant</strong><small>Demo assistant · Sample data</small></div>
-      <button id="closeAI" class="icon-button" aria-label="Close assistant">×</button>
-    </div>
-    <div class="assistant-welcome"><span>YOUR ACADEMIC COMPANION</span><h2>How can I help, Uswa?</h2><p>Ask a question about the sample attendance data.</p></div>
-    <div class="quick-prompts">
-      <button>What's my attendance?</button>
-      <button>Show low-attendance subjects</button>
-      <button>How can I improve?</button>
-    </div>
-    <div class="chat-messages" id="chatMessages">
-      <div class="message bot">Hello! I can answer basic questions using the sample data in this demo. I cannot access official university records.</div>
-    </div>
-    <form id="chatForm" class="chat-form">
-      <input id="chatInput" placeholder="Ask about attendance..." autocomplete="off" aria-label="Ask about attendance">
-      <button aria-label="Send message">↑</button>
-    </form>
-    <p class="ai-disclaimer">AI-style demo · A real AI service requires a secure backend.</p>
-  </aside>
-
-  <div class="toast-region" id="toastRegion" aria-live="polite"></div>
+  <div id="toast" class="toast" role="status"></div>
   <script src="script.js"></script>
 </body>
   </html>
-  
+                                                                                     
