@@ -1,0 +1,280 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b1020">
+  <title>AttendX | Smart University Attendance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <a href="#" class="brand">
+        <span class="brand-icon">A<span>X</span></span>
+        <span>Attend<span class="gold">X</span><small>UNIVERSITY CLOUD</small></span>
+      </a>
+
+      <p class="nav-label">WORKSPACE</p>
+      <nav>
+        <button class="nav-link active" data-view="overview">◫ <span>Overview</span></button>
+        <button class="nav-link" data-view="classes">▦ <span>Online classes</span></button>
+        <button class="nav-link" data-view="attendance">◷ <span>Attendance records</span></button>
+        <button class="nav-link" data-view="timetable">▤ <span>Timetable</span></button>
+        <button class="nav-link" data-view="reports">▥ <span>Reports & analytics</span></button>
+        <button class="nav-link" data-view="settings">⚙ <span>Settings</span></button>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <div class="help-card">
+          <span class="sparkle">✦</span>
+          <h3>Need some help?</h3>
+          <p>Ask your smart attendance assistant.</p>
+          <button id="openAI" class="text-btn">Open AI assistant ↗</button>
+        </div>
+        <div class="profile">
+          <div class="avatar">UN</div>
+          <div><strong id="profileName">Uswa Nazish</strong><small>Student · Demo account</small></div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">☰</button>
+        <div class="breadcrumb">Workspace <span>/</span> <strong id="pageTitle">Overview</strong></div>
+        <div class="top-actions">
+          <span class="demo-badge"><i></i> DEMO MODE</span>
+          <button class="icon-button" id="notifications" aria-label="Notifications">♧</button>
+          <div class="avatar small-avatar">UN</div>
+        </div>
+      </header>
+
+      <div class="content">
+        <section class="welcome">
+          <div>
+            <p class="eyebrow">SUNDAY, OCTOBER 11, 2026</p>
+            <h1 id="greeting">Good evening, Uswa <span class="gold">✦</span></h1>
+            <p class="muted">Your online university attendance, all in one place.</p>
+          </div>
+          <button class="btn btn-primary" id="nextClass">↗ Join next class</button>
+        </section>
+
+        <div class="notice" id="demoNotice">
+          <span>ⓘ</span>
+          <p><strong>Interactive demo.</strong> This website uses sample data. Class joins and QR check-ins are simulations, not official attendance verification.</p>
+          <button id="closeNotice" aria-label="Dismiss notice">×</button>
+        </div>
+
+        <!-- OVERVIEW -->
+        <section class="view active" id="view-overview">
+          <div class="stats">
+            <article class="stat-card">
+              <div class="stat-heading">Overall attendance <span class="stat-icon gold-bg">◔</span></div>
+              <h2>86.4<small>%</small></h2>
+              <p class="positive">● Above the 75% target</p>
+              <div class="progress"><span style="width:86.4%"></span></div>
+            </article>
+            <article class="stat-card">
+              <div class="stat-heading">Classes attended <span class="stat-icon blue-bg">✓</span></div>
+              <h2 id="attendedTotal">38</h2>
+              <p class="muted">Across all enrolled subjects</p>
+              <div class="stat-note">38 <span>/ 44 classes</span></div>
+            </article>
+            <article class="stat-card">
+              <div class="stat-heading">Classes missed <span class="stat-icon red-bg">↘</span></div>
+              <h2>6</h2>
+              <p class="muted">Review your missed sessions</p>
+              <button class="inline-link" data-goto="attendance">View records →</button>
+            </article>
+            <article class="stat-card">
+              <div class="stat-heading">Today's sessions <span class="stat-icon purple-bg">◉</span></div>
+              <h2>3</h2>
+              <p class="muted">Next class at 2:30 PM</p>
+              <button class="inline-link" data-goto="timetable">Open timetable →</button>
+            </article>
+          </div>
+
+          <div class="two-columns">
+            <article class="panel">
+              <div class="panel-heading">
+                <div><h2>Attendance overview</h2><p>Your sample attendance trend</p></div>
+                <select id="chartRange" class="control" aria-label="Chart range">
+                  <option value="week">Last 7 days</option>
+                  <option value="month">Last 30 days</option>
+                </select>
+              </div>
+              <div class="chart-summary"><strong id="chartAverage">81.7%</strong><span class="positive">↗ Sample trend</span></div>
+              <div class="chart">
+                <div class="y-labels"><span>100%</span><span>75%</span><span>50%</span><span>25%</span><span>0%</span></div>
+                <div class="chart-body">
+                  <div class="chart-lines"><i></i><i></i><i></i><i></i><i></i></div>
+                  <svg id="chartSvg" viewBox="0 0 700 220" preserveAspectRatio="none" aria-label="Attendance chart">
+                    <defs>
+                      <linearGradient id="fillGold" x1="0" x2="0" y1="0" y2="1">
+                        <stop offset="0%" stop-color="#d8b76a" stop-opacity=".3"/>
+                        <stop offset="100%" stop-color="#d8b76a" stop-opacity="0"/>
+                      </linearGradient>
+                    </defs>
+                    <path id="chartFill" fill="url(#fillGold)"></path>
+                    <path id="chartLine" fill="none" stroke="#c5a04d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <g id="chartDots"></g>
+                  </svg>
+                  <div class="x-labels" id="chartLabels"></div>
+                </div>
+              </div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-heading">
+                <div><h2>Subject breakdown</h2><p>Attendance by course</p></div>
+                <button class="icon-button" data-goto="attendance" aria-label="All records">↗</button>
+              </div>
+              <div id="subjectList" class="subject-list"></div>
+              <button class="btn btn-secondary full-width" data-goto="attendance">View all records</button>
+            </article>
+          </div>
+
+          <div class="two-columns lower-grid">
+            <article class="panel">
+              <div class="panel-heading">
+                <div><h2>Upcoming online classes</h2><p>Keep your learning on schedule</p></div>
+                <button class="inline-link" data-goto="classes">View all →</button>
+              </div>
+              <div id="upcomingList"></div>
+            </article>
+            <article class="panel">
+              <div class="panel-heading"><div><h2>Attendance insight</h2><p>Your semester progress</p></div><span class="sparkle">✦</span></div>
+              <div class="insight">
+                <div class="ring"><strong>86<small>%</small></strong></div>
+                <div><strong>You're on track!</strong><p>Consistent class attendance can help you stay above your target.</p></div>
+              </div>
+              <div class="tip">✧ <span>Use the attendance calculator to estimate how many future classes you need to attend.</span></div>
+              <button class="btn btn-secondary full-width" id="openCalculator">Calculate attendance goal</button>
+            </article>
+          </div>
+        </section>
+
+        <!-- CLASSES -->
+        <section class="view" id="view-classes">
+          <div class="section-heading">
+            <div><h2>My online classes</h2><p>Review your courses and open the demo class flow.</p></div>
+            <input id="classSearch" class="control search" type="search" placeholder="Search classes..." aria-label="Search classes">
+          </div>
+          <div class="class-grid" id="classGrid"></div>
+        </section>
+
+        <!-- ATTENDANCE -->
+        <section class="view" id="view-attendance">
+          <div class="section-heading">
+            <div><h2>Attendance records</h2><p>Review attendance by course and session.</p></div>
+            <div class="actions">
+              <select id="statusFilter" class="control" aria-label="Filter status">
+                <option value="all">All statuses</option>
+                <option value="Present">Present</option>
+                <option value="Absent">Absent</option>
+                <option value="Late">Late</option>
+              </select>
+              <button class="btn btn-primary" id="exportAttendance">↓ Export CSV</button>
+            </div>
+          </div>
+          <article class="panel table-panel">
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th>Course</th><th>Date</th><th>Instructor</th><th>Duration</th><th>Status</th></tr></thead>
+                <tbody id="attendanceTable"></tbody>
+              </table>
+            </div>
+            <div class="table-footer"><span id="recordCount">0 records</span><span>Sample data · Demo only</span></div>
+          </article>
+        </section>
+
+        <!-- TIMETABLE -->
+        <section class="view" id="view-timetable">
+          <div class="section-heading">
+            <div><h2>Weekly timetable</h2><p>Your scheduled online lectures in Pakistan Standard Time.</p></div>
+            <button class="btn btn-primary" id="exportTimetable">↓ Export schedule</button>
+          </div>
+          <div id="timetableGrid" class="timetable-grid"></div>
+        </section>
+
+        <!-- REPORTS -->
+        <section class="view" id="view-reports">
+          <div class="section-heading">
+            <div><h2>Reports & analytics</h2><p>Explore your sample semester attendance.</p></div>
+            <button class="btn btn-primary" id="reportDownload">↓ Download report</button>
+          </div>
+          <div class="stats report-stats">
+            <article class="stat-card"><div class="stat-heading">Tracked sessions</div><h2>44</h2><p class="muted">Across 5 courses</p></article>
+            <article class="stat-card"><div class="stat-heading">Overall attendance</div><h2>86.4<small>%</small></h2><p class="positive">Sample data</p></article>
+            <article class="stat-card"><div class="stat-heading">Late arrivals</div><h2>2</h2><p class="muted">Review punctuality</p></article>
+            <article class="stat-card"><div class="stat-heading">Required target</div><h2>75<small>%</small></h2><p class="muted">Example policy</p></article>
+          </div>
+          <article class="panel"><h2>Course performance</h2><p class="muted">Compare course attendance with the example target.</p><div id="reportCourses"></div></article>
+          <p class="muted small">Official attendance and academic eligibility must be confirmed by your university.</p>
+        </section>
+
+        <!-- SETTINGS -->
+        <section class="view" id="view-settings">
+          <div class="section-heading"><div><h2>Settings</h2><p>Customize your demo experience.</p></div></div>
+          <div class="settings-grid">
+            <article class="panel">
+              <h2>Profile</h2><p class="muted">Demo profile information</p>
+              <label>Full name<input class="control form-control" id="settingName" value="Uswa Nazish"></label>
+              <label>University email<input class="control form-control" id="settingEmail" type="email" value="student@example.edu"></label>
+              <button class="btn btn-primary" id="saveProfile">Save profile</button>
+            </article>
+            <article class="panel">
+              <h2>Preferences</h2><p class="muted">Choose your dashboard options</p>
+              <label class="toggle-row"><span><strong>Class reminders</strong><small>Remind me about upcoming sessions</small></span><input id="reminders" type="checkbox" checked></label>
+              <label class="toggle-row"><span><strong>Attendance alerts</strong><small>Warn when a subject is below 80%</small></span><input id="alerts" type="checkbox" checked></label>
+              <label class="toggle-row"><span><strong>Compact dashboard</strong><small>Use more compact cards</small></span><input id="compact" type="checkbox"></label>
+              <button class="btn btn-secondary" id="saveSettings">Save preferences</button>
+            </article>
+          </div>
+        </section>
+      </div>
+
+      <footer class="footer"><span>© 2026 AttendX University Cloud</span><span>● Demo mode · Designed for online learning</span><span>Privacy-conscious by design</span></footer>
+    </main>
+  </div>
+
+  <!-- MODAL -->
+  <div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <button class="modal-close" id="modalClose" aria-label="Close">×</button>
+      <div id="modalContent"></div>
+    </section>
+  </div>
+
+  <!-- AI ASSISTANT -->
+  <aside class="assistant" id="assistant">
+    <div class="assistant-head">
+      <div class="assistant-logo">✦</div>
+      <div><strong>AttendX Assistant</strong><small>Demo assistant · Sample data</small></div>
+      <button id="closeAI" class="icon-button" aria-label="Close assistant">×</button>
+    </div>
+    <div class="assistant-welcome"><span>YOUR ACADEMIC COMPANION</span><h2>How can I help, Uswa?</h2><p>Ask a question about the sample attendance data.</p></div>
+    <div class="quick-prompts">
+      <button>What's my attendance?</button>
+      <button>Show low-attendance subjects</button>
+      <button>How can I improve?</button>
+    </div>
+    <div class="chat-messages" id="chatMessages">
+      <div class="message bot">Hello! I can answer basic questions using the sample data in this demo. I cannot access official university records.</div>
+    </div>
+    <form id="chatForm" class="chat-form">
+      <input id="chatInput" placeholder="Ask about attendance..." autocomplete="off" aria-label="Ask about attendance">
+      <button aria-label="Send message">↑</button>
+    </form>
+    <p class="ai-disclaimer">AI-style demo · A real AI service requires a secure backend.</p>
+  </aside>
+
+  <div class="toast-region" id="toastRegion" aria-live="polite"></div>
+  <script src="script.js"></script>
+</body>
+  </html>
+  
