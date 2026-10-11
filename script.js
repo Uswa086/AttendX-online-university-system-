@@ -1,641 +1,609 @@
 
 "use strict";
 
-/* AttendX — browser-based university portal demo */
+document.addEventListener("DOMContentLoaded", function () {
+  // ------------------------------
+  // 1. Subjects and storage
+  // ------------------------------
+  const SUBJECTS = [
+    { id: "ai", name: "Artificial Intelligence", lab: true },
+    { id: "networks", name: "Computer Networks", lab: true },
+    { id: "security", name: "Information Security", lab: true },
+    { id: "calculus", name: "Multivariable Calculus", lab: false },
+    { id: "quran", name: "Holy Quran", lab: false },
+    { id: "ideology", name: "Ideology", lab: false }
+  ];
 
-const SUBJECTS = [
-  { id: "ai", name: "Artificial Intelligence", icon: "AI", lab: true },
-  { id: "cn", name: "Computer Networks", icon: "CN", lab: true },
-  { id: "is", name: "Information Security", icon: "IS", lab: true },
-  { id: "mvc", name: "Multivariable Calculus", icon: "MC", lab: false },
-  { id: "quran", name: "Holy Quran", icon: "HQ", lab: false },
-  { id: "ideology", name: "Ideology", icon: "ID", lab: false }
-];
+  const STORAGE_KEY = "attendx_student_portal_v1";
 
-const STORAGE_KEY = "attendx_student_portal_v1";
-
-function defaultState() {
-  return {
+  const defaultData = {
     profile: {
-      name: "Student Name",
+      name: "Student",
       roll: "",
       email: "",
-      program: "BS Computer Science",
+      department: "",
       semester: "1st Semester",
       university: ""
     },
     attendance: [],
     surveys: [],
-    marks: {}
+    marks: SUBJECTS.map(s => ({
+      subjectId: s.id,
+      obtained: "",
+      maximum: 100
+    }))
   };
-}
 
-function loadState() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (saved && typeof saved === "object") {
-      const defaults = defaultState();
+  function loadData() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved) return structuredClone(defaultData);
+
+      const parsed = JSON.parse(saved);
+
       return {
-        profile: { ...defaults.profile, ...(saved.profile || {}) },
-        attendance: Array.isArray(saved.attendance) ? saved.attendance : [],
-        surveys: Array.isArray(saved.surveys) ? saved.surveys : [],
-        marks: saved.marks && typeof saved.marks === "object"
-          ? saved.marks : {}
+        profile: { ...defaultData.profile, ...(parsed.profile || {}) },
+        attendance: Array.isArray(parsed.attendance) ? parsed.attendance : [],
+        surveys: Array.isArray(parsed.surveys) ? parsed.surveys : [],
+        marks: Array.isArray(parsed.marks)
+          ? SUBJECTS.map(subject => {
+              const existing = parsed.marks.find(
+                item => item.subjectId === subject.id
+              );
+              return existing
+                ? { subjectId: subject.id, obtained: existing.obtained ?? "",
+                    maximum: existing.maximum ?? 100 }
+                : { subjectId: subject.id, obtained: "", maximum: 100 };
+            })
+          : structuredClone(defaultData.marks)
       };
+    } catch (error) {
+      console.error("Could not load saved data:", error);
+      return structuredClone(defaultData);
     }
-  } catch (error) {
-    console.warn("Could not load saved data.", error);
   }
-  return defaultState();
-}
 
-let state = loadState();
-let toastTimer;
+  let data = loadData();
+  let toastTimeout;
 
-const $ = id => document.getElementById(id);
+  const $ = id => document.getElementById(id);
 
-function saveState() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    return true;
-  } catch (error) {
-    console.error("Saving failed:", error);
-    showToast("Could not save data. Check your browser storage.");
-    return false;
+  function saveData() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      return true;
+    } catch (error) {
+      console.error("Could not save data:", error);
+      notify("Could not save data. Check browser storage settings.");
+      return false;
+    }
   }
-}
 
-function escapeHTML(value) {
-  return String(value ?? "").replace(/[&<>"']/g, char => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
-  })[char]);
-}
+  function escapeHTML(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    })[char]);
+  }
 
-function showToast(message) {
-  const toast = $("toast");
-  toast.textContent = message;
-  toast.classList.add("show");
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.remove("show"), 2800);
-}
+  function notify(message) {
+    const toast = $("toast");
+    if (!toast) return;
 
-function setMessage(id, message, isError = false) {
-  const el = $(id);
-  if (!el) return;
-  el.textContent = message;
-  el.classList.toggle("error", isError);
-}
+    toast.textContent = message;
+    toast.classList.add("show");
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => toast.classList.remove("show"), 2800);
+  }
 
-function subjectById(id) {
-  return SUBJECTS.find(subject => subject.id === id);
-}
+  function subjectName(id) {
+    return SUBJECTS.find(s => s.id === id)?.name || "Unknown subject";
+  }
 
-function safeRecords() {
-  return state.attendance.filter(record =>
-    subjectById(record.subject) &&
-    ["lecture", "lab"].includes(record.type) &&
-    ["present", "absent"].includes(record.status) &&
-    (record.type !== "lab" || subjectById(record.subject).lab)
-  );
-}
+  function todayString() {
+    const now = new Date();
+    const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+    return localDate.toISOString().slice(0, 10);
+  }
 
-function recordsFor(subjectId, type) {
-  return safeRecords().filter(record =>
-    record.subject === subjectId && record.type === type
-  );
-}
+  // ------------------------------
+  // 2. Welcome screen and navigation
+  // ------------------------------
+  function openPortal() {
+    $("welcome")?.classList.add("hidden");
+    $("app")?.classList.remove("hidden");
+    showPage("dashboard");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
-function statsFor(subjectId, type) {
-  const records = recordsFor(subjectId, type);
-  const present = records.filter(r => r.status === "present").length;
-  return {
-    total: records.length,
-    present,
-    absent: records.length - present,
-    percent: records.length ? Math.round(present / records.length * 100) : 0
-  };
-}
+  function closeMobileMenu() {
+    $("sidebar")?.classList.remove("open");
+    $("overlay")?.classList.remove("show");
+  }
 
-function overallStats() {
-  const records = safeRecords();
-  const present = records.filter(r => r.status === "present").length;
-  return {
-    total: records.length,
-    present,
-    absent: records.length - present,
-    percent: records.length ? Math.round(present / records.length * 100) : 0
-  };
-}
+  function showPage(pageName) {
+    const page = $("page-" + pageName);
+    if (!page) {
+      notify("This page could not be found.");
+      return;
+    }
 
-function combinedStats(subjectId) {
-  const records = safeRecords().filter(r => r.subject === subjectId);
-  const present = records.filter(r => r.status === "present").length;
-  return {
-    total: records.length,
-    present,
-    percent: records.length ? Math.round(present / records.length * 100) : 0
-  };
-}
-
-function formatDate(dateString) {
-  if (!dateString) return "—";
-  const parts = dateString.split("-").map(Number);
-  if (parts.length !== 3 || parts.some(n => !n)) return dateString;
-  return new Date(parts[0], parts[1] - 1, parts[2])
-    .toLocaleDateString("en-GB", {
-      day: "2-digit", month: "short", year: "numeric"
+    document.querySelectorAll(".page").forEach(item => {
+      item.classList.toggle("active", item === page);
     });
-}
 
-/* Menu and page navigation */
+    document.querySelectorAll(".nav-link[data-page]").forEach(button => {
+      button.classList.toggle("active", button.dataset.page === pageName);
+    });
 
-function closeSidebar() {
-  $("sidebar").classList.remove("open");
-  $("overlay").classList.remove("show");
-}
+    const activeButton = document.querySelector(
+      '.nav-link[data-page="' + pageName + '"]'
+    );
+    $("pageTitle").textContent = activeButton
+      ? activeButton.textContent.trim()
+      : pageName.charAt(0).toUpperCase() + pageName.slice(1);
 
-function openSidebar() {
-  $("sidebar").classList.add("open");
-  $("overlay").classList.add("show");
-}
-
-function showPage(pageName) {
-  const validPages = [
-    "dashboard", "profile", "attendance", "survey", "result", "subjects"
-  ];
-  if (!validPages.includes(pageName)) return;
-
-  document.querySelectorAll(".page").forEach(page => {
-    page.classList.toggle("active", page.id === `page-${pageName}`);
-  });
-
-  document.querySelectorAll(".nav-link").forEach(link => {
-    link.classList.toggle("active", link.dataset.page === pageName);
-  });
-
-  const labels = {
-    dashboard: "Dashboard",
-    profile: "Profile",
-    attendance: "Total Attendance",
-    survey: "Survey",
-    result: "Result Card",
-    subjects: "Subjects & Labs"
-  };
-
-  $("pageLabel").textContent = labels[pageName];
-  closeSidebar();
-
-  if (pageName === "dashboard") renderDashboard();
-  if (pageName === "profile") fillProfileForm();
-  if (pageName === "attendance") renderAttendance();
-  if (pageName === "survey") renderSurveys();
-  if (pageName === "result") renderResults();
-  if (pageName === "subjects") renderAllSubjects();
-
-  window.scrollTo({ top: 0, behavior: "smooth" });
-}
-
-$("openMenu").addEventListener("click", () => {
-  $("welcome").classList.add("hidden");
-  $("app").classList.remove("hidden");
-  showPage("dashboard");
-
-  if (window.innerWidth <= 760) openSidebar();
-});
-
-$("menuToggle").addEventListener("click", openSidebar);
-$("closeMenu").addEventListener("click", closeSidebar);
-$("overlay").addEventListener("click", closeSidebar);
-
-document.querySelectorAll(".nav-link").forEach(button => {
-  button.addEventListener("click", () => showPage(button.dataset.page));
-});
-
-document.querySelectorAll("[data-goto]").forEach(button => {
-  button.addEventListener("click", () => showPage(button.dataset.goto));
-});
-
-/* Subject dropdowns */
-
-function populateSubjectDropdowns() {
-  const options = SUBJECTS.map(subject =>
-    `<option value="${subject.id}">${escapeHTML(subject.name)}</option>`
-  ).join("");
-
-  $("attSubject").innerHTML = options;
-  $("surveySubject").innerHTML = options;
-  updateClassTypeOptions();
-}
-
-function updateClassTypeOptions() {
-  const subject = subjectById($("attSubject").value);
-  const labOption = [...$("attType").options]
-    .find(option => option.value === "lab");
-
-  if (labOption) {
-    labOption.disabled = !subject || !subject.lab;
-    if (!subject || !subject.lab) $("attType").value = "lecture";
+    closeMobileMenu();
+    renderAll();
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
-}
 
-$("attSubject").addEventListener("change", updateClassTypeOptions);
+  // One delegated click handler: works for static AND generated buttons.
+  document.addEventListener("click", function (event) {
+    const pageButton = event.target.closest("[data-page]");
+    if (pageButton) {
+      showPage(pageButton.dataset.page);
+      return;
+    }
 
-/* Dashboard */
+    const actionButton = event.target.closest("[data-action]");
+    if (actionButton) {
+      handleAction(actionButton.dataset.action, actionButton.dataset);
+    }
+  });
 
-function renderDashboard() {
-  const profile = state.profile;
-  const firstName = (profile.name || "Student").trim().split(/\s+/)[0];
+  $("openMenu").addEventListener("click", openPortal);
 
-  $("greeting").textContent = `Welcome back, ${firstName}!`;
-  $("statSubjects").textContent = SUBJECTS.length;
+  $("menuToggle").addEventListener("click", function () {
+    $("sidebar").classList.add("open");
+    $("overlay").classList.add("show");
+  });
 
-  const overall = overallStats();
-  $("statAttendance").textContent = `${overall.percent}%`;
-  $("statPresent").textContent = overall.present;
-  $("statSessions").textContent = `Out of ${overall.total} sessions`;
+  $("closeMenu").addEventListener("click", closeMobileMenu);
+  $("overlay").addEventListener("click", closeMobileMenu);
 
-  const alerts = SUBJECTS.filter(subject => {
-    const stats = combinedStats(subject.id);
-    return stats.total > 0 && stats.percent < 75;
-  }).length;
+  $("backWelcome").addEventListener("click", function () {
+    closeMobileMenu();
+    $("app").classList.add("hidden");
+    $("welcome").classList.remove("hidden");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
 
-  $("statAlerts").textContent = alerts;
+  // ------------------------------
+  // 3. Attendance calculations
+  // ------------------------------
+  function validAttendanceRecords() {
+    return data.attendance.filter(record =>
+      SUBJECTS.some(s => s.id === record.subjectId) &&
+      ["Lecture", "Lab"].includes(record.type) &&
+      ["Present", "Absent", "Leave"].includes(record.status) &&
+      (!record.type || record.type !== "Lab" ||
+        SUBJECTS.find(s => s.id === record.subjectId)?.lab)
+    );
+  }
 
-  $("dashboardSubjects").innerHTML = SUBJECTS.map(subject => {
-    const stats = statsFor(subject.id, "lecture");
-    return `
-      <div class="subject-row">
-        <div>
-          <div class="subject-title">
-            <span>${escapeHTML(subject.name)}</span>
-            <span>${stats.present}/${stats.total} classes</span>
+  function getStats(records) {
+    const counted = records.filter(r => r.status !== "Leave");
+    const present = counted.filter(r => r.status === "Present").length;
+    const absent = counted.filter(r => r.status === "Absent").length;
+    const rate = counted.length ? (present / counted.length) * 100 : 0;
+
+    return {
+      total: counted.length,
+      present,
+      absent,
+      rate,
+      leaves: records.filter(r => r.status === "Leave").length
+    };
+  }
+
+  function getSubjectStats(subjectId, type) {
+    let records = validAttendanceRecords().filter(
+      r => r.subjectId === subjectId
+    );
+    if (type) records = records.filter(r => r.type === type);
+    return getStats(records);
+  }
+
+  function renderSubjectOptions() {
+    const options = SUBJECTS.map(s =>
+      `<option value="${s.id}">${escapeHTML(s.name)}</option>`
+    ).join("");
+
+    $("attendanceSubject").innerHTML = options;
+    $("surveySubject").innerHTML = options;
+    updateSessionType();
+  }
+
+  function updateSessionType() {
+    const subject = SUBJECTS.find(
+      s => s.id === $("attendanceSubject").value
+    );
+
+    const labOption = $("attendanceType").querySelector(
+      'option[value="Lab"]'
+    );
+
+    labOption.disabled = !subject?.lab;
+
+    if (!subject?.lab && $("attendanceType").value === "Lab") {
+      $("attendanceType").value = "Lecture";
+    }
+  }
+
+  $("attendanceSubject").addEventListener("change", updateSessionType);
+
+  $("attendanceDate").value = todayString();
+
+  $("attendanceForm").addEventListener("submit", function (event) {
+    event.preventDefault();
+
+    const subjectId = $("attendanceSubject").value;
+    const type = $("attendanceType").value;
+    const status = $("attendanceStatus").value;
+    const date = $("attendanceDate").value;
+    const subject = SUBJECTS.find(s => s.id === subjectId);
+
+    if (!subject || !date) {
+      notify("Please select a subject and date.");
+      return;
+    }
+
+    if (type === "Lab" && !subject.lab) {
+      notify("Labs are available only for the first three subjects.");
+      return;
+    }
+
+    if (date > todayString()) {
+      notify("Please select today or a past date.");
+      return;
+    }
+
+    const duplicate = data.attendance.some(record =>
+      record.subjectId === subjectId &&
+      record.type === type &&
+      record.date === date
+    );
+
+    if (duplicate) {
+      notify("A record for this subject, session type and date already exists.");
+      return;
+    }
+
+    data.attendance.push({
+      id: (crypto.randomUUID
+        ? crypto.randomUUID()
+        : Date.now() + "-" + Math.random().toString(16).slice(2)),
+      subjectId,
+      type,
+      status,
+      date
+    });
+
+    if (saveData()) {
+      renderAll();
+      $("attendanceDate").value = todayString();
+      notify("Attendance saved successfully.");
+    }
+  });
+
+  function renderAttendanceStats() {
+    const stats = getStats(validAttendanceRecords());
+    $("attTotal").textContent = stats.total;
+    $("attPresent").textContent = stats.present;
+    $("attAbsent").textContent = stats.absent;
+    $("attRate").textContent = stats.rate.toFixed(1) + "%";
+
+    $("statAttendance").textContent = stats.rate.toFixed(1) + "%";
+    $("statPresent").textContent = stats.present;
+
+    const lowCount = SUBJECTS.filter(subject => {
+      const s = getSubjectStats(subject.id);
+      return s.total > 0 && s.rate < 75;
+    }).length;
+    $("statLow").textContent = lowCount;
+    $("statSubjects").textContent = SUBJECTS.length;
+  }
+
+  function statusBadge(status) {
+    const className = status.toLowerCase();
+    return `<span class="status status-${className}">${escapeHTML(status)}</span>`;
+  }
+
+  function renderAttendanceHistory() {
+    const records = [...validAttendanceRecords()].sort((a, b) =>
+      b.date.localeCompare(a.date)
+    );
+
+    if (!records.length) {
+      $("attendanceHistory").innerHTML =
+        '<div class="empty-state">No attendance records yet.<br>Use the form above to add your first class.</div>';
+      return;
+    }
+
+    $("attendanceHistory").innerHTML = `
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Date</th><th>Subject</th><th>Type</th>
+            <th>Status</th><th>Action</th>
+          </tr></thead>
+          <tbody>
+            ${records.map(r => `
+              <tr>
+                <td>${escapeHTML(r.date)}</td>
+                <td><strong>${escapeHTML(subjectName(r.subjectId))}</strong></td>
+                <td>${escapeHTML(r.type)}</td>
+                <td>${statusBadge(r.status)}</td>
+                <td><button class="delete-btn" type="button"
+                  data-action="delete-attendance" data-id="${escapeHTML(r.id)}">
+                  Delete</button></td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>`;
+  }
+
+  function renderRecentRecords() {
+    const records = [...validAttendanceRecords()]
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .slice(0, 5);
+
+    if (!records.length) {
+      $("recentRecords").innerHTML =
+        '<div class="empty-state">Your recent records will appear here after you save attendance.</div>';
+      return;
+    }
+
+    $("recentRecords").innerHTML = `
+      <div class="table-wrap"><table>
+        <thead><tr><th>Date</th><th>Subject</th><th>Type</th><th>Status</th></tr></thead>
+        <tbody>${records.map(r => `
+          <tr><td>${escapeHTML(r.date)}</td>
+          <td><strong>${escapeHTML(subjectName(r.subjectId))}</strong></td>
+          <td>${escapeHTML(r.type)}</td><td>${statusBadge(r.status)}</td></tr>
+        `).join("")}</tbody>
+      </table></div>`;
+  }
+
+  function renderProgressList() {
+    $("dashboardSubjects").innerHTML = SUBJECTS.map(subject => {
+      const stats = getSubjectStats(subject.id);
+      const width = stats.rate.toFixed(1);
+      return `
+        <div class="progress-item">
+          <div class="progress-top">
+            <strong>${escapeHTML(subject.name)}</strong>
+            <span>${stats.total ? width + "%" : "No records"}</span>
           </div>
           <div class="progress-track">
-            <div class="progress-fill" style="width:${stats.percent}%"></div>
+            <div class="progress-fill" style="width:${width}%"></div>
           </div>
-        </div>
-        <div class="progress-percent">${stats.percent}%</div>
-      </div>`;
-  }).join("");
-
-  $("donutValue").textContent = `${overall.percent}%`;
-  $("attendanceDonut").style.background =
-    `conic-gradient(var(--purple) ${overall.percent}%, #edeaf9 ${overall.percent}%)`;
-
-  if (!overall.total) {
-    $("dashboardAlert").textContent =
-      "No attendance records yet. Open Total Attendance to record your first class.";
-  } else if (alerts > 0) {
-    $("dashboardAlert").textContent =
-      `${alerts} subject(s) are below 75%. Attend upcoming classes to improve your percentage.`;
-  } else {
-    $("dashboardAlert").textContent =
-      "Your recorded attendance is on track. Keep attending your classes!";
-  }
-}
-
-/* Student profile */
-
-function fillProfileForm() {
-  const p = state.profile;
-  $("studentName").value = p.name || "";
-  $("rollNumber").value = p.roll || "";
-  $("studentEmail").value = p.email || "";
-  $("studentProgram").value = p.program || "";
-  $("studentSemester").value = p.semester || "1st Semester";
-  $("studentUniversity").value = p.university || "";
-}
-
-function renderProfileHeader() {
-  const name = state.profile.name || "Student Name";
-  const initial = name.trim().charAt(0).toUpperCase() || "S";
-
-  $("sideName").textContent = name;
-  $("sideAvatar").textContent = initial;
-  $("topAvatar").textContent = initial;
-  $("profileHeading").textContent = name;
-  $("profileAvatar").textContent = initial;
-}
-
-$("profileForm").addEventListener("submit", event => {
-  event.preventDefault();
-
-  state.profile = {
-    name: $("studentName").value.trim() || "Student Name",
-    roll: $("rollNumber").value.trim(),
-    email: $("studentEmail").value.trim(),
-    program: $("studentProgram").value.trim(),
-    semester: $("studentSemester").value,
-    university: $("studentUniversity").value.trim()
-  };
-
-  if (saveState()) {
-    renderProfileHeader();
-    renderDashboard();
-    setMessage("profileMessage", "Profile saved successfully.");
-    showToast("Profile updated.");
-  }
-});
-
-/* Attendance management */
-
-$("attendanceForm").addEventListener("submit", event => {
-  event.preventDefault();
-
-  const subjectId = $("attSubject").value;
-  const type = $("attType").value;
-  const status = $("attStatus").value;
-  const date = $("attDate").value;
-  const subject = subjectById(subjectId);
-
-  if (!subject || !date) {
-    setMessage("attendanceMessage", "Please select a subject and date.", true);
-    return;
+        </div>`;
+    }).join("");
   }
 
-  if (type === "lab" && !subject.lab) {
-    setMessage("attendanceMessage", "This subject does not have a lab.", true);
-    return;
+  // ------------------------------
+  // 4. Subject cards and lab details
+  // ------------------------------
+  function renderSubjectCards() {
+    $("subjectCards").innerHTML = SUBJECTS.map((subject, index) => {
+      const stats = getSubjectStats(subject.id);
+      const lecture = getSubjectStats(subject.id, "Lecture");
+      const lab = getSubjectStats(subject.id, "Lab");
+
+      return `
+        <article class="subject-card">
+          <div class="subject-card-head">
+            <div class="subject-number">${String(index + 1).padStart(2, "0")}</div>
+            <div>
+              <h3>${escapeHTML(subject.name)}</h3>
+              <p>${subject.lab ? "Lecture + Laboratory" : "Lecture only"}</p>
+            </div>
+            <div class="subject-rate">${stats.total ? stats.rate.toFixed(1) + "%" : "—"}</div>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" style="width:${stats.rate.toFixed(1)}%"></div>
+          </div>
+          <div class="subject-metrics">
+            <span class="metric-chip">Lecture: ${lecture.present}/${lecture.total} present</span>
+            ${subject.lab
+              ? `<span class="metric-chip">Lab: ${lab.present}/${lab.total} present</span>`
+              : ""}
+            <span class="metric-chip">${stats.total} counted sessions</span>
+          </div>
+          <div class="subject-card-actions">
+            <button class="btn btn-secondary" type="button"
+              data-action="manage-subject" data-subject="${subject.id}"
+              data-type="Lecture">Manage Lecture</button>
+            ${subject.lab ? `
+              <button class="btn btn-primary" type="button"
+                data-action="manage-subject" data-subject="${subject.id}"
+                data-type="Lab">Manage Lab</button>` : ""}
+          </div>
+        </article>`;
+    }).join("");
   }
 
-  // Avoid accidentally recording the same class twice.
-  const duplicate = safeRecords().some(record =>
-    record.subject === subjectId &&
-    record.type === type &&
-    record.date === date
-  );
+  // ------------------------------
+  // 5. Student profile
+  // ------------------------------
+  function renderProfile() {
+    $("profileName").value = data.profile.name || "";
+    $("profileRoll").value = data.profile.roll || "";
+    $("profileEmail").value = data.profile.email || "";
+    $("profileDepartment").value = data.profile.department || "";
+    $("profileSemester").value = data.profile.semester || "1st Semester";
+    $("profileUniversity").value = data.profile.university || "";
 
-  if (duplicate) {
-    setMessage(
-      "attendanceMessage",
-      "A record already exists for this subject, class type and date. Delete it first to change it.",
-      true
-    );
-    return;
+    const name = data.profile.name.trim() || "Student";
+    $("headerName").textContent = name;
+    $("dashName").textContent = name;
+    $("headerAvatar").textContent = name.charAt(0).toUpperCase();
+    $("profileAvatar").textContent = name.charAt(0).toUpperCase();
   }
 
-  state.attendance.push({
-    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    subject: subjectId,
-    type,
-    status,
-    date
+  $("profileForm").addEventListener("submit", function (event) {
+    event.preventDefault();
+
+    data.profile = {
+      name: $("profileName").value.trim() || "Student",
+      roll: $("profileRoll").value.trim(),
+      email: $("profileEmail").value.trim(),
+      department: $("profileDepartment").value.trim(),
+      semester: $("profileSemester").value,
+      university: $("profileUniversity").value.trim()
+    };
+
+    if (saveData()) {
+      renderProfile();
+      notify("Profile saved successfully.");
+    }
   });
 
-  if (saveState()) {
-    renderAttendance();
-    renderDashboard();
-    renderAllSubjects();
-    setMessage("attendanceMessage", "Attendance record saved successfully.");
-    showToast("Attendance updated.");
-  }
-});
+  // ------------------------------
+  // 6. Student survey
+  // ------------------------------
+  $("surveyForm").addEventListener("submit", function (event) {
+    event.preventDefault();
 
-function renderAttendance() {
-  const overall = overallStats();
+    data.surveys.push({
+      id: Date.now().toString(),
+      subjectId: $("surveySubject").value,
+      teaching: $("surveyTeaching").value,
+      experience: $("surveyExperience").value,
+      material: $("surveyMaterial").value,
+      comments: $("surveyComments").value.trim(),
+      date: todayString()
+    });
 
-  $("attTotal").textContent = overall.total;
-  $("attPresent").textContent = overall.present;
-  $("attAbsent").textContent = overall.absent;
-  $("attPercent").textContent = `${overall.percent}%`;
-
-  $("attendanceTable").innerHTML = SUBJECTS.map(subject => {
-    const lecture = statsFor(subject.id, "lecture");
-    const lab = subject.lab ? statsFor(subject.id, "lab") : null;
-    const combined = combinedStats(subject.id);
-
-    return `
-      <tr>
-        <td>${escapeHTML(subject.name)}</td>
-        <td>${lecture.present}/${lecture.total}</td>
-        <td>${lecture.percent}%</td>
-        <td>${lab ? `${lab.present}/${lab.total}` : "N/A"}</td>
-        <td>${lab ? `${lab.percent}%` : "N/A"}</td>
-        <td><strong>${combined.percent}%</strong></td>
-      </tr>`;
-  }).join("");
-
-  const records = [...safeRecords()].sort((a, b) =>
-    b.date.localeCompare(a.date) || b.id.localeCompare(a.id)
-  );
-
-  $("historyTable").innerHTML = records.length ? records.map(record => {
-    const subject = subjectById(record.subject);
-    return `
-      <tr>
-        <td>${escapeHTML(formatDate(record.date))}</td>
-        <td>${escapeHTML(subject.name)}</td>
-        <td>${record.type === "lab" ? "Lab" : "Lecture"}</td>
-        <td><span class="status-badge ${record.status === "present" ? "status-present" : "status-absent"}">${record.status === "present" ? "Present" : "Absent"}</span></td>
-        <td><button class="delete-btn" data-delete="${escapeHTML(record.id)}">Delete</button></td>
-      </tr>`;
-  }).join("") : `
-    <tr><td colspan="5" class="empty-cell">No attendance records yet. Record your first class above.</td></tr>`;
-}
-
-$("historyTable").addEventListener("click", event => {
-  const button = event.target.closest("[data-delete]");
-  if (!button) return;
-
-  const id = button.dataset.delete;
-  const record = state.attendance.find(item => item.id === id);
-  if (!record) return;
-
-  if (!confirm("Delete this attendance record?")) return;
-
-  state.attendance = state.attendance.filter(item => item.id !== id);
-  if (saveState()) {
-    renderAttendance();
-    renderDashboard();
-    renderAllSubjects();
-    showToast("Attendance record deleted.");
-  }
-});
-
-/* CSV attendance export */
-
-$("exportCsv").addEventListener("click", () => {
-  const records = [...safeRecords()].sort((a, b) => a.date.localeCompare(b.date));
-
-  if (!records.length) {
-    showToast("Record some attendance before exporting.");
-    return;
-  }
-
-  const rows = [
-    ["Date", "Subject", "Class Type", "Status"],
-    ...records.map(record => [
-      record.date,
-      subjectById(record.subject).name,
-      record.type === "lab" ? "Lab" : "Lecture",
-      record.status
-    ])
-  ];
-
-  const csv = rows.map(row => row.map(value =>
-    `"${String(value).replace(/"/g, '""')}"`
-  ).join(",")).join("\r\n");
-
-  const blob = new Blob(["\uFEFF" + csv], {
-    type: "text/csv;charset=utf-8;"
-  });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-
-  link.href = url;
-  link.download = "attendx-attendance.csv";
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
-
-  showToast("Attendance CSV exported.");
-});
-
-/* Subjects and labs cards */
-
-function renderAllSubjects() {
-  $("allSubjects").innerHTML = SUBJECTS.map(subject => {
-    const lecture = statsFor(subject.id, "lecture");
-    const lab = subject.lab ? statsFor(subject.id, "lab") : null;
-    const combined = combinedStats(subject.id);
-
-    return `
-      <article class="course-card">
-        <div class="course-top">
-          <div class="course-icon">${escapeHTML(subject.icon)}</div>
-          <div>
-            <h2>${escapeHTML(subject.name)}</h2>
-            <p>${subject.lab ? "Lecture + Practical Lab" : "Lecture only"}</p>
-          </div>
-          <div class="course-percent">${combined.percent}%</div>
-        </div>
-        <div class="course-detail">
-          <div>
-            <span>Lecture attendance</span>
-            <strong>${lecture.present}/${lecture.total} · ${lecture.percent}%</strong>
-          </div>
-          <div>
-            <span>${subject.lab ? "Lab attendance" : "Lab attendance"}</span>
-            <strong>${lab ? `${lab.present}/${lab.total} · ${lab.percent}%` : "Not applicable"}</strong>
-          </div>
-        </div>
-        <div style="margin-top:16px" class="progress-track">
-          <div class="progress-fill" style="width:${combined.percent}%"></div>
-        </div>
-        <button class="text-btn" style="margin-top:15px;padding:0" data-goto="attendance">
-          Manage attendance →
-        </button>
-      </article>`;
-  }).join("");
-}
-
-/* Course survey */
-
-$("surveyForm").addEventListener("submit", event => {
-  event.preventDefault();
-
-  const selectedRating = document.querySelector('input[name="rating"]:checked');
-  if (!selectedRating) {
-    setMessage("surveyMessage", "Please choose a rating.", true);
-    return;
-  }
-
-  state.surveys.unshift({
-    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    subject: $("surveySubject").value,
-    rating: Number(selectedRating.value),
-    positive: $("surveyPositive").value.trim(),
-    suggestion: $("surveySuggestion").value.trim(),
-    date: new Date().toISOString().slice(0, 10)
+    if (saveData()) {
+      $("surveyForm").reset();
+      renderSurveyHistory();
+      notify("Thank you! Your survey has been saved.");
+    }
   });
 
-  if (saveState()) {
-    $("surveyForm").reset();
-    renderSurveys();
-    setMessage("surveyMessage", "Thank you! Your survey has been saved in this browser.");
-    showToast("Survey submitted.");
+  function renderSurveyHistory() {
+    const surveys = [...data.surveys].reverse();
+
+    if (!surveys.length) {
+      $("surveyHistory").innerHTML =
+        '<div class="empty-state">No surveys submitted yet.</div>';
+      return;
+    }
+
+    $("surveyHistory").innerHTML = `
+      <div class="table-wrap"><table>
+        <thead><tr><th>Date</th><th>Subject</th><th>Teaching</th>
+        <th>Experience</th><th>Material</th></tr></thead>
+        <tbody>${surveys.map(s => `
+          <tr><td>${escapeHTML(s.date)}</td>
+          <td>${escapeHTML(subjectName(s.subjectId))}</td>
+          <td>${escapeHTML(s.teaching)}</td>
+          <td>${escapeHTML(s.experience)}</td>
+          <td>${escapeHTML(s.material)}</td></tr>
+          ${s.comments ? `<tr><td colspan="5"><strong>Comment:</strong> ${escapeHTML(s.comments)}</td></tr>` : ""}
+        `).join("")}</tbody>
+      </table></div>`;
   }
-});
 
-function renderSurveys() {
-  $("surveyHistory").innerHTML = state.surveys.length
-    ? state.surveys.map(survey => {
-        const subject = subjectById(survey.subject);
-        if (!subject) return "";
+  // ------------------------------
+  // 7. Editable sample result card
+  // ------------------------------
+  function getMark(subjectId) {
+    return data.marks.find(m => m.subjectId === subjectId);
+  }
 
-        return `
-          <article class="survey-entry">
-            <strong>${escapeHTML(subject.name)}</strong>
-            <p>Rating: ${"★".repeat(Math.max(0, Math.min(5, survey.rating)))}${"☆".repeat(5 - Math.max(0, Math.min(5, survey.rating)))} · ${escapeHTML(formatDate(survey.date))}</p>
-            ${survey.positive ? `<p><b>Working well:</b> ${escapeHTML(survey.positive)}</p>` : ""}
-            ${survey.suggestion ? `<p><b>Suggestion:</b> ${escapeHTML(survey.suggestion)}</p>` : ""}
-          </article>`;
-      }).join("")
-    : '<p class="muted">You have not submitted any surveys yet.</p>';
-}
+  function validMark(mark) {
+    if (mark.obtained === "" || mark.obtained === null) return null;
 
-/* Result card: editable marks and estimated grades */
+    const obtained = Number(mark.obtained);
+    const maximum = Number(mark.maximum);
 
-function gradeFor(mark) {
-  if (mark >= 90) return { grade: "A+", points: 4.00 };
-  if (mark >= 85) return { grade: "A", points: 4.00 };
-  if (mark >= 80) return { grade: "A-", points: 3.70 };
-  if (mark >= 75) return { grade: "B+", points: 3.30 };
-  if (mark >= 70) return { grade: "B", points: 3.00 };
-  if (mark >= 65) return { grade: "B-", points: 2.70 };
-  if (mark >= 60) return { grade: "C+", points: 2.30 };
-  if (mark >= 55) return { grade: "C", points: 2.00 };
-  if (mark >= 50) return { grade: "D", points: 1.00 };
-  return { grade: "F", points: 0.00 };
-}
+    if (!Number.isFinite(obtained) || !Number.isFinite(maximum) ||
+        maximum <= 0 || obtained < 0 || obtained > maximum) {
+      return null;
+    }
 
-function renderResults() {
-  $("resultTable").innerHTML = SUBJECTS.map(subject => {
-    const mark = state.marks[subject.id] ?? "";
-    const validMark = mark !== "" && Number.isFinite(Number(mark)) &&
-      Number(mark) >= 0 && Number(mark) <= 100;
-    const grade = validMark ? gradeFor(Number(mark)) : null;
+    return { obtained, maximum, percent: obtained / maximum * 100 };
+  }
 
-    return `
-      <tr>
-        <td>${escapeHTML(subject.name)}</td>
-        <td><input aria-label="${escapeHTML(subject.name)} marks" type="number" min="0" max="100" step="1" class="mark-input" data-mark="${subject.id}" value="${escapeHTML(mark)}" placeholder="0–100" style="width:100px;padding:9px"></td>
-        <td>${grade ? grade.grade : "—"}</td>
-        <td>${grade ? grade.points.toFixed(2) : "—"}</td>
-      </tr>`;
-  }).join("");
+  function gradeFor(percent) {
+    if (percent >= 90) return "A+";
+    if (percent >= 80) return "A";
+    if (percent >= 70) return "B";
+    if (percent >= 60) return "C";
+    if (percent >= 50) return "D";
+    return "F";
+  }
 
-  updateResultSummary();
-}
+  function renderResults() {
+    $("resultTable").innerHTML = `
+      <div class="table-wrap"><table>
+        <thead><tr><th>Subject</th><th>Obtained marks</th>
+        <th>Maximum marks</th><th>Percentage</th><th>Grade</th></tr></thead>
+        <tbody>${SUBJECTS.map(subject => {
+          const mark = getMark(subject.id);
+          const result = validMark(mark);
+          return `<tr>
+            <td><strong>${escapeHTML(subject.name)}</strong></td>
+            <td><input type="number" min="0" step="any" max="${Number(mark.maximum) || 100}"
+              aria-label="${escapeHTML(subject.name)} obtained marks"
+              data-mark-subject="${subject.id}" data-mark-field="obtained"
+              value="${escapeHTML(mark.obtained)}" placeholder="—"></td>
+            <td><input type="number" min="1" step="any"
+              aria-label="${escapeHTML(subject.name)} maximum marks"
+              data-mark-subject="${subject.id}" data-mark-field="maximum"
+              value="${escapeHTML(mark.maximum)}"></td>
+            <td>${result ? result.percent.toFixed(1) + "%" : "—"}</td>
+            <td>${result ? gradeFor(result.percent) : "—"}</td>
+          </tr>`;
+        }).join("")}</tbody>
+      </table></div>`;
 
-function updateResultSummary() {
-  const values = SUBJECTS.map(subject => state.marks[subject.id])
-    .filter(value => value !== undefined && value !== "" &&
-      Number.isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 100)
-    .map(Number);
+    const results = data.marks.map(validMark).filter(Boolean);
+    const obtained = results.reduce((sum, r) => sum + r.obtained, 0);
+    const maximum = results.reduce((sum, r) => sum + r.maximum, 0);
+    const average = maximum ? obtained / maximum * 100 : 0;
+    const passed = results.filter(r => r.percent >= 50).length;
 
-  const total = values.reduce((sum, mark) => sum + mark, 0);
-  const average = values.length ? total / values.length : 0;
-  const gpa = values.length
-    ? values.reduce((sum, mark) => sum + gradeFor(mark).points, 0) / values.length
-    : 0;
+    $("resultObtained").textContent = obtained.toFixed(1).replace(/\.0$/, "");
+    $("resultMaximum").textContent = maximum.toFixed(1).replace(/\.0$/, "");
+    $("resultAverage").textContent = average.toFixed(1) + "%";
+    $("resultPassed").textContent = passed + "/" + results.length;
+  }
 
-  $("marksTotal").textContent = `${total} / ${SUBJECTS.length * 100}`;
-  $("marksAverage").textContent = `${average.toFixed(1)}%`;
-  $("marksGpa").textContent = `${gpa.toFixed(2)} / 4.00`;
-}
+  $("resultTable").addEventListener("change", function (event) {
+    const input = event.target.closest("[data-mark-subject]");
+    if (!input) return;
 
-$("saveMarks").addEventListener("click", () => {
-  const newMarks = { ...state.marks };
-  const inputs = [...document.querySelectorAll("[data-mark]")];
+    const mark = getMark(input.dataset.markSubject);
+    if (!mark) return;
 
-  for (const input of inputs) {
-    const value = input.value.trim();
+    const field = input.dataset.markField;
+    const value = input.value;
 
-    if (value === "") {
-  
+    if (value !== "" && (!Number.isFinite(Number(value)) || Number(value) < 0)) {
+      notify("Enter a valid non-negative number.");
+      renderResults();
+      return;
+    }
+
+    mark[field] = value === "" ? "" : Number(value);
+
+    const obtained = Nu
