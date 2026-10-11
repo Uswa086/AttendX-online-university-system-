@@ -4,178 +4,414 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101426">
   <title>AttendX | University Portal</title>
   <link rel="stylesheet" href="style.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="script.js" defer></script>
 </head>
 <body>
-  <!-- First screen: Menu -->
+
+  <!-- Welcome screen -->
   <section id="welcome" class="welcome-screen">
-    <div class="welcome-card">
-      <div class="brand-mark">A<span>X</span></div>
-      <p class="eyebrow">UNIVERSITY STUDENT PORTAL</p>
+    <div class="welcome-glow"></div>
+    <div class="welcome-content">
+      <div class="brand-mark">A</div>
+      <p class="eyebrow">YOUR DIGITAL CAMPUS</p>
       <h1>Welcome to <span>AttendX</span></h1>
-      <p>One portal for your classes, attendance, results and student life.</p>
-      <button class="primary-btn" id="openMenu">☰ Open Menu</button>
-      <p class="welcome-foot">ONLINE LEARNING • SMART ATTENDANCE</p>
+      <p class="welcome-description">
+        Your university life, attendance, academic progress and results —
+        all in one place.
+      </p>
+      <button id="openMenu" class="btn btn-primary btn-large" type="button">
+        Open Menu <span>→</span>
+      </button>
+      <div class="welcome-footer">STUDY SMARTER. TRACK BETTER.</div>
     </div>
   </section>
 
   <!-- Main application -->
   <div id="app" class="app hidden">
+    <div id="overlay" class="overlay"></div>
+
     <aside id="sidebar" class="sidebar">
-      <div class="brand"><span class="brand-mark small">A<span>X</span></span><div>AttendX<small>STUDENT PORTAL</small></div></div>
-      <button id="closeMenu" class="close-menu" aria-label="Close menu">✕</button>
-      <div class="student-mini">
-        <div class="avatar" id="sideAvatar">S</div>
-        <div><strong id="sideName">Student Name</strong><small>University Student</small></div>
+      <div class="sidebar-brand">
+        <div class="brand-mark small">A</div>
+        <div>
+          <strong>AttendX</strong>
+          <span>Student Portal</span>
+        </div>
+        <button id="closeMenu" class="icon-btn close-menu" type="button"
+          aria-label="Close menu">×</button>
       </div>
-      <p class="nav-label">MAIN MENU</p>
-      <nav class="navigation">
-        <button class="nav-link active" data-page="dashboard">▦ <span>Dashboard</span></button>
-        <button class="nav-link" data-page="profile">♙ <span>Profile</span></button>
-        <button class="nav-link" data-page="attendance">◷ <span>Total Attendance</span></button>
-        <button class="nav-link" data-page="survey">☷ <span>Survey</span></button>
-        <button class="nav-link" data-page="result">▤ <span>Result Card</span></button>
-        <button class="nav-link" data-page="subjects">▣ <span>Subjects & Labs</span></button>
+
+      <div class="nav-label">MAIN MENU</div>
+      <nav id="navigation" class="navigation">
+        <button class="nav-link active" data-page="dashboard" type="button">
+          <span>▦</span> Dashboard
+        </button>
+        <button class="nav-link" data-page="profile" type="button">
+          <span>♙</span> Profile
+        </button>
+        <button class="nav-link" data-page="attendance" type="button">
+          <span>✓</span> Total Attendance
+        </button>
+        <button class="nav-link" data-page="subjects" type="button">
+          <span>▤</span> Subjects & Labs
+        </button>
+        <button class="nav-link" data-page="survey" type="button">
+          <span>☷</span> Survey
+        </button>
+        <button class="nav-link" data-page="results" type="button">
+          <span>◎</span> Result Card
+        </button>
       </nav>
+
       <div class="sidebar-bottom">
-        <div class="online-dot"></div> Online Learning Portal
-        <button id="resetData" class="reset-btn">Reset demo data</button>
+        <div class="sidebar-note">
+          <span class="status-dot"></span>
+          <div>
+            <strong>Academic Portal</strong>
+            <small>Personal dashboard</small>
+          </div>
+        </div>
+        <button id="backWelcome" class="nav-link logout-btn" type="button">
+          <span>↩</span> Welcome Screen
+        </button>
       </div>
     </aside>
 
-    <div id="overlay" class="overlay"></div>
-
-    <main class="main-area">
+    <main class="main-content">
       <header class="topbar">
-        <button id="menuToggle" class="menu-toggle">☰ <span>Menu</span></button>
-        <div class="breadcrumb">Student Portal <span>/</span> <strong id="pageLabel">Dashboard</strong></div>
-        <div class="top-right"><span class="status-pill">● Demo mode</span><div class="avatar top-avatar" id="topAvatar">S</div></div>
+        <div class="topbar-left">
+          <button id="menuToggle" class="icon-btn menu-toggle" type="button"
+            aria-label="Open navigation">☰</button>
+          <div>
+            <p class="topbar-label">UNIVERSITY MANAGEMENT</p>
+            <h2 id="pageTitle">Dashboard</h2>
+          </div>
+        </div>
+        <div class="topbar-user">
+          <div class="avatar" id="headerAvatar">S</div>
+          <div class="user-meta">
+            <strong id="headerName">Student</strong>
+            <small>Student account</small>
+          </div>
+        </div>
       </header>
 
-      <div class="page-wrap">
-        <!-- DASHBOARD -->
+      <div class="page-container">
+
+        <!-- Dashboard -->
         <section class="page active" id="page-dashboard">
-          <div class="page-heading">
-            <div><p class="eyebrow">YOUR ACADEMIC OVERVIEW</p><h1 id="greeting">Welcome back!</h1>
-              <p class="muted">Track your classes, attendance and academic progress.</p></div>
-            <button class="primary-btn" data-goto="attendance">+ Manage Attendance</button>
+          <div class="welcome-banner">
+            <div>
+              <p class="eyebrow">YOUR ACADEMIC OVERVIEW</p>
+              <h1>Hello, <span id="dashName">Student</span> 👋</h1>
+              <p>Stay organized, monitor attendance and keep moving forward.</p>
+            </div>
+            <div class="banner-symbol">✦</div>
+          </div>
+
+          <div class="section-heading">
+            <div>
+              <h3>At a glance</h3>
+              <p>Your current academic statistics</p>
+            </div>
+            <button class="btn btn-secondary" data-page="attendance" type="button">
+              View Attendance →
+            </button>
           </div>
 
           <div class="stats-grid">
-            <article class="stat-card"><div class="stat-icon purple">▦</div><span>Total Subjects</span><strong id="statSubjects">6</strong><small>Active courses</small></article>
-            <article class="stat-card"><div class="stat-icon green">✓</div><span>Overall Attendance</span><strong id="statAttendance">0%</strong><small id="attendanceHint">Across all lectures and labs</small></article>
-            <article class="stat-card"><div class="stat-icon blue">◷</div><span>Classes Attended</span><strong id="statPresent">0</strong><small id="statSessions">Out of 0 sessions</small></article>
-            <article class="stat-card"><div class="stat-icon amber">!</div><span>Attendance Alerts</span><strong id="statAlerts">0</strong><small>Subjects below 75%</small></article>
+            <article class="stat-card">
+              <div class="stat-icon purple">▤</div>
+              <p>Total Subjects</p>
+              <h2 id="statSubjects">6</h2>
+              <small>Registered subjects</small>
+            </article>
+            <article class="stat-card">
+              <div class="stat-icon green">✓</div>
+              <p>Overall Attendance</p>
+              <h2 id="statAttendance">0%</h2>
+              <small>Based on recorded classes</small>
+            </article>
+            <article class="stat-card">
+              <div class="stat-icon orange">◷</div>
+              <p>Classes Attended</p>
+              <h2 id="statPresent">0</h2>
+              <small>Lecture and lab sessions</small>
+            </article>
+            <article class="stat-card">
+              <div class="stat-icon blue">◎</div>
+              <p>Subjects Below 75%</p>
+              <h2 id="statLow">0</h2>
+              <small>Based on recorded attendance</small>
+            </article>
           </div>
 
           <div class="content-grid">
-            <section class="panel">
-              <div class="panel-heading"><div><h2>My Subjects</h2><p>Lecture attendance at a glance</p></div><button class="text-btn" data-goto="subjects">View all →</button></div>
-              <div id="dashboardSubjects" class="subject-list"></div>
-            </section>
-            <section class="panel">
-              <div class="panel-heading"><div><h2>Attendance Summary</h2><p>Lectures and labs combined</p></div></div>
-              <div class="donut-wrap"><div class="donut" id="attendanceDonut"><div><strong id="donutValue">0%</strong><small>Attendance</small></div></div></div>
-              <div class="legend"><span><i class="dot present-dot"></i>Present</span><span><i class="dot absent-dot"></i>Absent</span></div>
-              <div class="alert-box" id="dashboardAlert">Start recording your attendance to see your progress.</div>
-            </section>
-          </div>
-          <section class="panel quick-panel"><h2>Quick Actions</h2><div class="quick-actions">
-            <button data-goto="attendance">◷ <span>Record Attendance</span></button>
-            <button data-goto="profile">♙ <span>Update Profile</span></button>
-            <button data-goto="survey">☷ <span>Submit Survey</span></button>
-            <button data-goto="result">▤ <span>View Result Card</span></button>
-          </div></section>
-        </section>
+            <article class="panel">
+              <div class="panel-heading">
+                <div>
+                  <h3>Subject attendance</h3>
+                  <p>Attendance percentage by subject</p>
+                </div>
+                <span class="live-tag">LIVE</span>
+              </div>
+              <div id="dashboardSubjects" class="progress-list"></div>
+            </article>
 
-        <!-- PROFILE -->
-        <section class="page" id="page-profile">
-          <div class="page-heading"><div><p class="eyebrow">PERSONAL INFORMATION</p><h1>Student Profile</h1><p class="muted">Manage your student details.</p></div></div>
-          <form id="profileForm" class="panel form-panel">
-            <div class="profile-banner"><div class="avatar profile-avatar" id="profileAvatar">S</div><div><h2 id="profileHeading">Student Name</h2><p>Your academic profile</p></div></div>
-            <div class="form-grid">
-              <label>Full name<input id="studentName" required maxlength="80" placeholder="Enter your full name"></label>
-              <label>Roll number<input id="rollNumber" maxlength="40" placeholder="e.g. BSCS-2026-01"></label>
-              <label>Email address<input id="studentEmail" type="email" maxlength="120" placeholder="student@example.com"></label>
-              <label>Degree / Program<input id="studentProgram" maxlength="80" placeholder="e.g. BS Computer Science"></label>
-              <label>Semester<select id="studentSemester"><option>1st Semester</option><option>2nd Semester</option><option>3rd Semester</option><option>4th Semester</option><option>5th Semester</option><option>6th Semester</option><option>7th Semester</option><option>8th Semester</option></select></label>
-              <label>University<input id="studentUniversity" maxlength="120" placeholder="University name"></label>
+            <article class="panel">
+              <div class="panel-heading">
+                <div>
+                  <h3>Quick actions</h3>
+                  <p>Jump to a section</p>
+                </div>
+              </div>
+              <div class="quick-actions">
+                <button class="quick-action" data-page="attendance" type="button">
+                  <span class="quick-icon purple">✓</span>
+                  <span><strong>Mark Attendance</strong><small>Record a class or lab</small></span>
+                  <b>→</b>
+                </button>
+                <button class="quick-action" data-page="subjects" type="button">
+                  <span class="quick-icon blue">▤</span>
+                  <span><strong>Explore Subjects</strong><small>View your course list</small></span>
+                  <b>→</b>
+                </button>
+                <button class="quick-action" data-page="results" type="button">
+                  <span class="quick-icon orange">◎</span>
+                  <span><strong>View Result Card</strong><small>Manage marks</small></span>
+                  <b>→</b>
+                </button>
+                <button class="quick-action" data-page="profile" type="button">
+                  <span class="quick-icon green">♙</span>
+                  <span><strong>Update Profile</strong><small>Edit student details</small></span>
+                  <b>→</b>
+                </button>
+              </div>
+            </article>
+          </div>
+
+          <article class="panel recent-panel">
+            <div class="panel-heading">
+              <div>
+                <h3>Recent attendance records</h3>
+                <p>Your latest entries</p>
+              </div>
+              <button class="text-btn" data-page="attendance" type="button">View all →</button>
             </div>
-            <button class="primary-btn" type="submit">Save Profile</button><span id="profileMessage" class="form-message"></span>
-          </form>
+            <div id="recentRecords"></div>
+          </article>
         </section>
 
-        <!-- ATTENDANCE -->
-        <section class="page" id="page-attendance">
-          <div class="page-heading"><div><p class="eyebrow">ATTENDANCE MANAGEMENT</p><h1>Total Attendance</h1><p class="muted">Record lectures and labs separately. Totals update automatically.</p></div></div>
-          <div class="stats-grid compact-stats">
-            <article class="stat-card"><span>Total Sessions</span><strong id="attTotal">0</strong></article>
-            <article class="stat-card"><span>Present</span><strong id="attPresent">0</strong></article>
-            <article class="stat-card"><span>Absent</span><strong id="attAbsent">0</strong></article>
-            <article class="stat-card"><span>Overall Percentage</span><strong id="attPercent">0%</strong></article>
+        <!-- Profile -->
+        <section class="page" id="page-profile">
+          <div class="page-intro">
+            <p class="eyebrow">PERSONAL INFORMATION</p>
+            <h1>Student Profile</h1>
+            <p>Manage your personal and academic details.</p>
           </div>
-          <section class="panel">
-            <div class="panel-heading"><div><h2>Record a Class</h2><p>Each record represents one session.</p></div></div>
-            <form id="attendanceForm" class="attendance-form">
-              <label>Subject<select id="attSubject" required></select></label>
-              <label>Class type<select id="attType"><option value="lecture">Lecture</option><option value="lab">Lab / Practical</option></select></label>
-              <label>Date<input id="attDate" type="date" required></label>
-              <label>Status<select id="attStatus"><option value="present">Present</option><option value="absent">Absent</option></select></label>
-              <button class="primary-btn" type="submit">+ Save Record</button>
+
+          <article class="panel form-panel">
+            <div class="panel-heading">
+              <div><h3>Profile details</h3><p>Changes are saved in this browser.</p></div>
+              <div class="avatar large" id="profileAvatar">S</div>
+            </div>
+            <form id="profileForm" class="form-grid">
+              <label>Full name
+                <input id="profileName" name="name" maxlength="80" required
+                  placeholder="Enter your full name">
+              </label>
+              <label>Student ID / Roll number
+                <input id="profileRoll" name="roll" maxlength="40"
+                  placeholder="Enter roll number">
+              </label>
+              <label>Email address
+                <input id="profileEmail" name="email" type="email" maxlength="120"
+                  placeholder="student@example.com">
+              </label>
+              <label>Department / Program
+                <input id="profileDepartment" name="department" maxlength="80"
+                  placeholder="e.g. BS Artificial Intelligence">
+              </label>
+              <label>Semester
+                <select id="profileSemester" name="semester">
+                  <option>1st Semester</option>
+                  <option>2nd Semester</option>
+                  <option>3rd Semester</option>
+                  <option>4th Semester</option>
+                  <option>5th Semester</option>
+                  <option>6th Semester</option>
+                  <option>7th Semester</option>
+                  <option>8th Semester</option>
+                </select>
+              </label>
+              <label>University name
+                <input id="profileUniversity" name="university" maxlength="120"
+                  placeholder="Enter university name">
+              </label>
+              <div class="form-actions">
+                <button class="btn btn-primary" type="submit">Save Profile</button>
+              </div>
             </form>
-            <p class="muted small-note">Labs are available only for Artificial Intelligence, Computer Networks and Information Security.</p>
-            <p id="attendanceMessage" class="form-message"></p>
-          </section>
-          <section class="panel">
-            <div class="panel-heading"><div><h2>Subject Attendance</h2><p>Lecture and lab percentages are calculated separately.</p></div></div>
-            <div class="table-scroll"><table><thead><tr><th>Subject</th><th>Lecture</th><th>Lecture %</th><th>Lab</th><th>Lab %</th><th>Combined %</th></tr></thead><tbody id="attendanceTable"></tbody></table></div>
-          </section>
-          <section class="panel">
-            <div class="panel-heading"><div><h2>Attendance History</h2><p>Delete an incorrect demo record if needed.</p></div><button id="exportCsv" class="secondary-btn">Export CSV ↓</button></div>
-            <div class="table-scroll"><table><thead><tr><th>Date</th><th>Subject</th><th>Type</th><th>Status</th><th>Action</th></tr></thead><tbody id="historyTable"></tbody></table></div>
-          </section>
+          </article>
         </section>
 
-        <!-- SURVEY -->
-        <section class="page" id="page-survey">
-          <div class="page-heading"><div><p class="eyebrow">STUDENT VOICE</p><h1>Course Survey</h1><p class="muted">Share feedback about your online learning experience.</p></div></div>
-          <form id="surveyForm" class="panel form-panel">
-            <label>Choose subject<select id="surveySubject" required></select></label>
-            <label>Rate the teaching experience<div class="rating-options"><label><input type="radio" name="rating" value="5" required> 5 — Excellent</label><label><input type="radio" name="rating" value="4"> 4 — Very good</label><label><input type="radio" name="rating" value="3"> 3 — Good</label><label><input type="radio" name="rating" value="2"> 2 — Fair</label><label><input type="radio" name="rating" value="1"> 1 — Needs improvement</label></div></label>
-            <label>What is working well?<textarea id="surveyPositive" rows="3" maxlength="1000" placeholder="Share your thoughts..."></textarea></label>
-            <label>Suggestions for improvement<textarea id="surveySuggestion" rows="3" maxlength="1000" placeholder="Your suggestions..."></textarea></label>
-            <button class="primary-btn" type="submit">Submit Survey</button><p id="surveyMessage" class="form-message"></p>
-          </form>
-          <section class="panel"><div class="panel-heading"><div><h2>My Submitted Surveys</h2><p>Saved in this browser.</p></div></div><div id="surveyHistory" class="survey-history"></div></section>
+        <!-- Attendance -->
+        <section class="page" id="page-attendance">
+          <div class="page-intro">
+            <p class="eyebrow">CLASS & LAB TRACKER</p>
+            <h1>Total Attendance</h1>
+            <p>Record each session and automatically calculate attendance.</p>
+          </div>
+
+          <div class="stats-grid attendance-stats">
+            <article class="stat-card">
+              <p>Total Sessions</p><h2 id="attTotal">0</h2><small>Lectures and labs</small>
+            </article>
+            <article class="stat-card">
+              <p>Present</p><h2 id="attPresent">0</h2><small>Attended sessions</small>
+            </article>
+            <article class="stat-card">
+              <p>Absent</p><h2 id="attAbsent">0</h2><small>Missed sessions</small>
+            </article>
+            <article class="stat-card">
+              <p>Overall Rate</p><h2 id="attRate">0%</h2><small>Present ÷ counted sessions</small>
+            </article>
+          </div>
+
+          <article class="panel">
+            <div class="panel-heading">
+              <div><h3>Record a session</h3><p>Labs are available for the first three subjects only.</p></div>
+            </div>
+            <form id="attendanceForm" class="form-grid">
+              <label>Subject
+                <select id="attendanceSubject" required></select>
+              </label>
+              <label>Session type
+                <select id="attendanceType" required>
+                  <option value="Lecture">Lecture</option>
+                  <option value="Lab">Lab</option>
+                </select>
+              </label>
+              <label>Attendance status
+                <select id="attendanceStatus" required>
+                  <option value="Present">Present</option>
+                  <option value="Absent">Absent</option>
+                  <option value="Leave">Leave</option>
+                </select>
+              </label>
+              <label>Class date
+                <input id="attendanceDate" type="date" required>
+              </label>
+              <div class="form-actions">
+                <button class="btn btn-primary" type="submit">+ Save Attendance</button>
+              </div>
+            </form>
+            <p class="form-hint">A subject, session type and date can only be recorded once. Leave is excluded from the attendance percentage.</p>
+          </article>
+
+          <article class="panel">
+            <div class="panel-heading table-heading">
+              <div><h3>Attendance history</h3><p>All saved lecture and lab records</p></div>
+              <button id="exportAttendance" class="btn btn-secondary" type="button">Export CSV ↓</button>
+            </div>
+            <div id="attendanceHistory"></div>
+          </article>
         </section>
 
-        <!-- RESULT CARD -->
-        <section class="page" id="page-result">
-          <div class="page-heading"><div><p class="eyebrow">ACADEMIC PERFORMANCE</p><h1>Result Card</h1><p class="muted">Enter your marks to calculate grades and GPA-style summary.</p></div><button id="printResults" class="secondary-btn">Print Result</button></div>
-          <div class="notice">Demo result card: enter your actual marks. These are not official university results.</div>
-          <section class="panel">
-            <div class="panel-heading"><div><h2>Subject Marks</h2><p>Marks obtained out of 100 per subject.</p></div><button id="saveMarks" class="primary-btn">Save Marks</button></div>
-            <div class="table-scroll"><table><thead><tr><th>Subject</th><th>Marks / 100</th><th>Grade</th><th>Grade Points</th></tr></thead><tbody id="resultTable"></tbody></table></div>
-            <div class="result-summary"><div><span>Total Marks</span><strong id="marksTotal">0 / 600</strong></div><div><span>Average</span><strong id="marksAverage">0%</strong></div><div><span>Estimated GPA</span><strong id="marksGpa">0.00 / 4.00</strong></div></div>
-            <p id="resultMessage" class="form-message"></p>
-          </section>
-        </section>
-
-        <!-- SUBJECTS -->
+        <!-- Subjects -->
         <section class="page" id="page-subjects">
-          <div class="page-heading"><div><p class="eyebrow">YOUR COURSES</p><h1>Subjects & Labs</h1><p class="muted">Six subjects with individual lecture attendance. First three include labs.</p></div></div>
-          <div id="allSubjects" class="all-subjects-grid"></div>
+          <div class="page-intro">
+            <p class="eyebrow">YOUR COURSES</p>
+            <h1>Subjects & Labs</h1>
+            <p>Track attendance separately for lectures and eligible laboratory sessions.</p>
+          </div>
+          <div id="subjectCards" class="subject-grid"></div>
         </section>
 
-        <footer class="footer">AttendX Student Portal <span>•</span> Frontend demonstration</footer>
+        <!-- Survey -->
+        <section class="page" id="page-survey">
+          <div class="page-intro">
+            <p class="eyebrow">STUDENT VOICE</p>
+            <h1>Course Survey</h1>
+            <p>Share feedback about your online learning experience.</p>
+          </div>
+          <article class="panel form-panel">
+            <div class="panel-heading">
+              <div><h3>Learning experience survey</h3><p>Your answers are stored locally in this demo.</p></div>
+            </div>
+            <form id="surveyForm" class="form-grid">
+              <label>Subject
+                <select id="surveySubject" required></select>
+              </label>
+              <label>Teaching quality
+                <select id="surveyTeaching" required>
+                  <option value="">Select rating</option>
+                  <option>Excellent</option><option>Good</option>
+                  <option>Average</option><option>Needs improvement</option>
+                </select>
+              </label>
+              <label>Online class experience
+                <select id="surveyExperience" required>
+                  <option value="">Select rating</option>
+                  <option>Excellent</option><option>Good</option>
+                  <option>Average</option><option>Needs improvement</option>
+                </select>
+              </label>
+              <label>Study material quality
+                <select id="surveyMaterial" required>
+                  <option value="">Select rating</option>
+                  <option>Excellent</option><option>Good</option>
+                  <option>Average</option><option>Needs improvement</option>
+                </select>
+              </label>
+              <label class="full-width">Suggestions or comments
+                <textarea id="surveyComments" rows="4" maxlength="1000"
+                  placeholder="Share your feedback..."></textarea>
+              </label>
+              <div class="form-actions">
+                <button class="btn btn-primary" type="submit">Submit Survey</button>
+              </div>
+            </form>
+          </article>
+          <article class="panel">
+            <div class="panel-heading"><div><h3>Submitted surveys</h3><p>Your saved feedback</p></div></div>
+            <div id="surveyHistory"></div>
+          </article>
+        </section>
+
+        <!-- Results -->
+        <section class="page" id="page-results">
+          <div class="page-intro">
+            <p class="eyebrow">ACADEMIC PERFORMANCE</p>
+            <h1>Result Card</h1>
+            <p>Enter marks to calculate your sample result summary.</p>
+          </div>
+          <article class="panel">
+            <div class="panel-heading">
+              <div><h3>Marks & grades</h3><p>These are personal demo records, not official university results.</p></div>
+              <button id="printResults" class="btn btn-secondary" type="button">Print Result</button>
+            </div>
+            <div id="resultTable"></div>
+          </article>
+          <div class="stats-grid result-stats">
+            <article class="stat-card"><p>Total Obtained</p><h2 id="resultObtained">0</h2><small>Across entered marks</small></article>
+            <article class="stat-card"><p>Total Maximum</p><h2 id="resultMaximum">0</h2><small>Across all subjects</small></article>
+            <article class="stat-card"><p>Average</p><h2 id="resultAverage">0%</h2><small>Sample calculation</small></article>
+            <article class="stat-card"><p>Subjects Passed</p><h2 id="resultPassed">0/6</h2><small>Pass mark: 50%</small></article>
+          </div>
+        </section>
+
+        <footer class="app-footer">
+          AttendX Student Portal <span>•</span> Frontend demo · Not an official university system
+        </footer>
       </div>
     </main>
   </div>
-  <div id="toast" class="toast" role="status"></div>
-  <script src="script.js"></script>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>
-  </html>
-                                                                                     
+                  </html>
+  
